@@ -1,0 +1,121 @@
+---
+title: "Homework Assignment #4"
+subtitle: "Prioritizing Potential Aquaculture"
+author: "Xue Yan"
+date: 11/19/2024
+execute: 
+  eval: true
+  warning: false
+  message: false
+format:
+  html:
+    toc: true
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+## Library and data preparation
+#| code-fold: true
+
+# Load libraries
+library(here)
+library(sf)
+library(stars)
+library(tmap)
+library(viridisLite)
+library(dplyr)
+library(tmaptools)      # for reading OpenStreetMap data
+library(tidyverse)
+library(ggplot2)        
+library(testthat)
+```
+
+```{r}
+# Load data
+#| code-fold: true
+
+## West Coast EEZ
+wc_region <- sf::st_read(here::here("data","wc_regions_clean.shp"), quiet = TRUE)
+
+## Bathymetry
+Bathymetry <- stars::read_stars(here::here("data", "depth.tif"), quiet = TRUE)
+                                
+## Sea Surface Temperature
+
+### Read the path of all temperature files
+files <- list.files(
+  here("data"), pattern = "average*", 
+  full.names = TRUE)
+
+SST <- data.frame(file_name = files)
+
+### Combine all temperature file into a raster stack and calculate average
+SST_stack <- SST$file_name %>%
+  lapply(read_stars) %>%      # Generate a list with stars files
+  do.call(c, .)               # Generate the raster stack
+
+### Calculate average temperature and save as a raster 
+SST_ave <- st_apply(SST_stack, MARGIN = c("x", "y"), 
+                    FUN = mean, na.rm = TRUE) %>%
+           write_stars("SST_mean.tif")
+
+### Convert average SST from Kelvin to Celsius
+SST_aveC <- SST_ave - 273.15
+```
+
+```{r}
+# Check if coordinate reference systems (CRS) of all data match
+if ((st_crs(wc_region) == st_crs(Bathymetry)) &&
+    (st_crs(wc_region) == st_crs(SST_aveC))) {
+  print("all match!")
+} else {
+  print("not match")
+}
+```
+
+```{r}
+# Crop depth raster to match the extent of the SST raster
+SST_extent <- st_bbox(SST_aveC)
+Bathymetry_cropped <- st_crop(Bathymetry, SST_extent)
+
+# Resample the depth data to match the resolution of the SST data 
+# using the nearest neighbor approach
+Bathymetry_resampled <- st_warp(Bathymetry_cropped, SST_aveC, method = "near")
+```
+
+```{r}
+# Check that the depth and SST match in resolution, extent, and coordinate reference system
+
+## Try to stack
+stack_raster <- tryCatch({
+  c(SST_aveC, Bathymetry_resampled)  # Try stacking the rasters
+}, error = function(e) {
+  NULL  # If stacking fails, return NULL
+})
+
+## Check if successfully stack
+if (!is.null(stack_raster)) {
+  print("all match!")
+} else {
+  print("not match")
+}
+```
+
+```{r}
+tm_shape(SST_ave_C) +
+  tm_raster()
+
+#| code-fold: true
+# Download base map from OSM of the bounding box
+background_data <- tmaptools::read_osm(sf::st_bbox(SST_extent))
+
+# Keep raster data the same CRS to OSM
+homes_impacted_sameCRS <- st_transform(homes_impacted, 
+                                       crs = st_crs(background_data))
+
+# Map the homes in Houston that lost power
+tm_shape(background_data) + 
+  tm_rgb() + 
+
+```
