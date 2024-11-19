@@ -114,7 +114,7 @@ background_data <- tmaptools::read_osm(sf::st_bbox(SST_extent))
 homes_impacted_sameCRS <- st_transform(homes_impacted, 
                                        crs = st_crs(background_data))
 
-# Map the homes in Houston that lost power
+# Map 
 tm_shape(background_data) + 
   tm_rgb() + 
 
