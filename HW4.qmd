@@ -102,11 +102,13 @@ if (!is.null(stack_raster)) {
 }
 ```
 
+### 2. Set workflow for selecting suitable environment conditions for Oyster
+
 ```{r}
 #| code-fold: true
-# Set functions for selecting suitable environment conditions
+# Set workflow for selecting suitable environment conditions for oyster
 
-oysters <- function(SST, Depth){
+oysters <- function(Species, SST, Depth){
   # Drop units of Baythemetry data
   Depth_drop <- drop_units(Depth)
   
@@ -133,11 +135,52 @@ oysters <- function(SST, Depth){
     print("not match")
   }
   
+  # Find suitable locations
   oyster_suit <- SST_stars * Depth_stars
+
+  # Set unsuitable area as NA
+  oyster_suit[oyster_suit == 0] <- NA
 }
 
+# Crop the extent of suitable area to Exclusive Economic Zones
+cropped_oyster_suit <- stars::st_crop(oyster_suit, wc_region)
+# Find the total suitable area within each EEZ
 
-dungeness_crab <- function(SST, Depth){
+
+
+# Map the suitable area for oyster
+## Download base map from OSM of the bounding box
+background_data <- tmaptools::read_osm(sf::st_bbox(SST_extent))
+
+## Keep raster data the same CRS to OSM
+oyster_suit_sameCRS <- st_transform(oyster_suit, 
+                                    crs = st_crs(background_data))
+
+  ## Map
+  tm_shape(background_data) + 
+    tm_rgb() +
+    tm_shape(oyster_suit_sameCRS) +
+    tm_raster(palette = "red",
+              title = "",
+              labels = paste("Suitable area for", Species)) +
+    tm_credits("© OpenStreetMap contributors",
+              position=c("left", "bottom")) +
+    tm_layout(legend.text.size = 0.85,
+              legend.text.fontface = "bold",
+              legend.title.size = 1,
+              legend.title.fontface = "bold",
+              legend.position = c("left","bottom")) +
+  tm_scale_bar(position = c(0,0),
+              breaks = c(0,5,10,15)) +
+  tm_compass(position = c(0,0.8),
+            size = 1.3)
+  }
+```
+
+### 3. Set workflow for selecting suitable environment conditions for Dungeness Crab
+
+```{r}
+dungeness_crab <- function(Species, SST, Depth){
   # Drop units of Baythemetry data
   Depth_drop <- drop_units(Depth)
   
@@ -164,11 +207,58 @@ dungeness_crab <- function(SST, Depth){
     print("not match")
   }
   
+
+  # Find suitable locations
   crab_suit <- SST_stars * Depth_stars
+
+  # Set unsuitable area as NA
+  crab_suit[crab_suit == 0] <- NA
+
+  # Map the suitable area for crab
+  ## Download base map from OSM of the bounding box
+  background_data <- tmaptools::read_osm(sf::st_bbox(SST_extent))
+
+  ## Keep raster data the same CRS to OSM
+  crab_suit_sameCRS <- st_transform(crab_suit, 
+                                       crs = st_crs(background_data))
+
+  ## Map
+  tm_shape(background_data) + 
+    tm_rgb() +
+    tm_shape(crab_suit_sameCRS) +
+    tm_raster(palette = "purple",
+              title = "",
+              labels = paste("Suitable area for", Species)) +
+    tm_credits("© OpenStreetMap contributors",
+              position=c("left", "bottom")) +
+    tm_layout(legend.text.size = 0.85,
+              legend.text.fontface = "bold",
+              legend.title.size = 1,
+              legend.title.fontface = "bold",
+              legend.position = c("left","bottom")) +
+  tm_scale_bar(position = c(0,0),
+              breaks = c(0,5,10,15)) +
+  tm_compass(position = c(0,0.8),
+            size = 1.3)
 }
 ```
 
+### 4. Generate suitable area for Oyster and Dungeness Crab
+
 ```{r}
+oysters_map <- oysters(Species = "Oyster", 
+                   SST = SST_aveC,
+                   Depth = Bathymetry_resampled)
+
+dungeness_craba_map <- dungeness_crab(Species = "Dungeness Crab", 
+                                 SST = SST_aveC,
+                                 Depth = Bathymetry_resampled)
+
+tmap_arrange(oysters_map, dungeness_craba_map, ncol = 2)
+```
+
+```{r}
+## for test
   Depth <- drop_units(Bathymetry_resampled)
   
   # set suitable values to 1 and unsuitable values to 0
@@ -192,49 +282,55 @@ if (!is.null(stack_raster)) {
   print("not match")
 }
   
-  
-  
-  
-  
-  oyster_suit <- SST * Depth
+# Find suitable locations
+oyster_suit <- SST_stars * Depth_stars
+
+# Set unsuitable area as NA
+oyster_suit[oyster_suit == 0] <- NA
+# Rasterize Exclusive Economic Zones data
+wc_region_raster <- st_rasterize(wc_region, oyster_suit)
 
 
-```
+# Find the total suitable area within each EEZ
 
-```{r}
-# Dungeness Crab https://www.sealifebase.ca/summary/Metacarcinus-magister.html
-#https://www.pacificseafood.com/species/dungeness-crab/
-```
 
-```{r}
-tm_shape(SST_ave_C) +
-  tm_raster()
 
-#| code-fold: true
-# Download base map from OSM of the bounding box
+
+# Map the suitable area for oyster
+## Download base map from OSM of the bounding box
 background_data <- tmaptools::read_osm(sf::st_bbox(SST_extent))
 
-# Keep raster data the same CRS to OSM
-homes_impacted_sameCRS <- st_transform(homes_impacted, 
+## Keep raster data the same CRS to OSM
+oyster_suit_sameCRS <- st_transform(oyster_suit, 
                                        crs = st_crs(background_data))
 
-# Map 
+## Map
 tm_shape(background_data) + 
-  tm_rgb() + 
-
+  tm_rgb() +
+  tm_shape(oyster_suit_sameCRS) +
+  tm_raster(palette = "red",
+            title = "",
+            labels = "Suitable area for Oyster" ) +
+  tm_credits("© OpenStreetMap contributors",
+             position=c("left", "bottom")) +
+  tm_layout(legend.text.size = 0.85,
+            legend.text.fontface = "bold",
+            legend.title.size = 1,
+            legend.title.fontface = "bold",
+            legend.position = c("left","bottom")) +
+tm_scale_bar(position = c(0,0),
+             breaks = c(0,5,10,15)) +
+tm_compass(position = c(0,0.8),
+           size = 1.3)
 ```
 
 ```{r}
-oysters(SST_aveC, Bathymetry)
-
-SST <- ifelse(SST_aveC[[1]] >= 3 & SST_aveC[[1]] <= 19, 1, 0)
-  Depth <- ifelse(Bathymetry[[1]] >= -360 & Bathymetry[[1]] <= 0, 1, 0)
-  crab_suit <- SST * Depth
-  
-Depth <- ifelse(Bathymetry[["depth.tif"]] >= -360 & Bathymetry[["depth.tif"]] <= 0, 1, 0)
-  
 ```
 
-```{r}
+### Citation
 
-```
+| Reference | Citation | Link |
+|------------------------|------------------------|------------------------|
+| OpenStreetMap | OpenStreetMap contributors. (2015) Planet dump. \[November 21, 2024\]. Retrieved from [https://planet.openstree](https://planet.openstreetmap.org/) | <https://download.geofabrik.de/> |
+| SeaLifeBase - Oyster/Dungeness Crab |  | <https://www.sealifebase.ca/search.php> |
+|  |  |  |
