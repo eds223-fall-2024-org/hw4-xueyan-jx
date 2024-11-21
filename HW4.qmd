@@ -14,14 +14,14 @@ editor_options:
   chunk_output_type: console
 ---
 
-```{r}
-## Library and data preparation
-#| code-fold: true
+### 1. Library, function, and data preparation
 
+```{r}
 # Load libraries
 library(here)
 library(sf)
 library(stars)
+library(units)          # for droping units of the data (Bathymetry)
 library(tmap)
 library(viridisLite)
 library(dplyr)
@@ -103,6 +103,110 @@ if (!is.null(stack_raster)) {
 ```
 
 ```{r}
+#| code-fold: true
+# Set functions for selecting suitable environment conditions
+
+oysters <- function(SST, Depth){
+  # Drop units of Baythemetry data
+  Depth_drop <- drop_units(Depth)
+  
+  # Set suitable values to 1 and unsuitable values to 0
+  # This process will generate "matrix" "array" data
+  SST_suit <- ifelse(SST[[1]] >= 11 & SST[[1]] <= 30, 1, 0)
+  Depth_suit <- ifelse(Depth_drop[[1]] >= -70 & Depth_drop[[1]] <= 0, 1, 0) 
+  
+  # Transform the "matrix" "array" data to "stars"
+  SST_stars <- st_as_stars(SST_suit, dimensions = st_dimensions(SST))
+  Depth_stars <- st_as_stars(Depth_suit, dimensions = st_dimensions(Depth))
+  
+  # Check if the new data match in resolution, extent, and CRS
+  ## Try to stack
+  stack_raster <- tryCatch({
+    c(SST_stars, Depth_stars)
+  }, error = function(e) {
+    NULL # If stacking fails, return NULL
+  })
+  ## Check if successfully stack
+  if (!is.null(stack_raster)) {
+    print("all match!")
+  } else {
+    print("not match")
+  }
+  
+  oyster_suit <- SST_stars * Depth_stars
+}
+
+
+dungeness_crab <- function(SST, Depth){
+  # Drop units of Baythemetry data
+  Depth_drop <- drop_units(Depth)
+  
+  # Set suitable values to 1 and unsuitable values to 0
+  # This process will generate "matrix" "array" data
+  SST_suit <- ifelse(SST[[1]] >= 3 & SST[[1]] <= 19, 1, 0)
+  Depth_suit <- ifelse(Depth_drop[[1]] >= --360 & Depth_drop[[1]] <= 0, 1, 0) 
+  
+  # Transform the "matrix" "array" data to "stars"
+  SST_stars <- st_as_stars(SST_suit, dimensions = st_dimensions(SST))
+  Depth_stars <- st_as_stars(Depth_suit, dimensions = st_dimensions(Depth))
+  
+  # Check if the new data match in resolution, extent, and CRS
+  ## Try to stack
+  stack_raster <- tryCatch({
+    c(SST_stars, Depth_stars)
+  }, error = function(e) {
+    NULL # If stacking fails, return NULL
+  })
+  ## Check if successfully stack
+  if (!is.null(stack_raster)) {
+    print("all match!")
+  } else {
+    print("not match")
+  }
+  
+  crab_suit <- SST_stars * Depth_stars
+}
+```
+
+```{r}
+  Depth <- drop_units(Bathymetry_resampled)
+  
+  # set suitable values to 1 and unsuitable values to 0
+  SST_suit <- ifelse(SST_aveC[[1]] >= 11 & SST_aveC[[1]] <= 30, 1, 0)
+  Depth_suit <- ifelse(Depth[[1]] >= -70 & Depth[[1]] <= 0, 1, 0) # "matrix" "array" 
+  
+  SST_stars <- st_as_stars(SST_suit, dimensions = st_dimensions(SST_aveC))
+  Depth_stars <- st_as_stars(Depth_suit, 
+                             dimensions = st_dimensions(Bathymetry_resampled))
+  ## Try to stack
+stack_raster <- tryCatch({
+  c(SST_stars, Depth_stars)  # Try stacking the rasters
+}, error = function(e) {
+  NULL  # If stacking fails, return NULL
+})
+
+## Check if successfully stack
+if (!is.null(stack_raster)) {
+  print("all match!")
+} else {
+  print("not match")
+}
+  
+  
+  
+  
+  
+  oyster_suit <- SST * Depth
+
+
+```
+
+```{r}
+# Dungeness Crab https://www.sealifebase.ca/summary/Metacarcinus-magister.html
+#https://www.pacificseafood.com/species/dungeness-crab/
+```
+
+```{r}
 tm_shape(SST_ave_C) +
   tm_raster()
 
@@ -117,5 +221,20 @@ homes_impacted_sameCRS <- st_transform(homes_impacted,
 # Map 
 tm_shape(background_data) + 
   tm_rgb() + 
+
+```
+
+```{r}
+oysters(SST_aveC, Bathymetry)
+
+SST <- ifelse(SST_aveC[[1]] >= 3 & SST_aveC[[1]] <= 19, 1, 0)
+  Depth <- ifelse(Bathymetry[[1]] >= -360 & Bathymetry[[1]] <= 0, 1, 0)
+  crab_suit <- SST * Depth
+  
+Depth <- ifelse(Bathymetry[["depth.tif"]] >= -360 & Bathymetry[["depth.tif"]] <= 0, 1, 0)
+  
+```
+
+```{r}
 
 ```
