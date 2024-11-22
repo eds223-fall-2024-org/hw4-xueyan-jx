@@ -21,9 +21,9 @@ editor_options:
 library(here)
 library(sf)
 library(stars)
+library(terra)
 library(units)          # for droping units of the data (Bathymetry)
 library(tmap)
-library(viridisLite)
 library(dplyr)
 library(tmaptools)      # for reading OpenStreetMap data
 library(tidyverse)
@@ -288,14 +288,24 @@ oyster_suit <- SST_stars * Depth_stars
 # Set unsuitable area as NA
 oyster_suit[oyster_suit == 0] <- NA
 
-# 
-cropped_oyster_suit <- sf::st_crop(oyster_suit, wc_region)
-# Rasterize Exclusive Economic Zones data
-wc_region_raster <- st_rasterize(wc_region["rgn_id"], oyster_suit)
 
+# Transform data format from stars/sf to terra
+oyster_suit_terra <- terra::rast(oyster_suit)
+wc_region_terra <- terra::vect(wc_region)
+oyster_suit_terra <- terra::project(oyster_suit_terra, crs(wc_region_terra))
+
+# Find suitable area within the extent of Exclusive Economic Zones
+oyster_suit_EEZ <- terra::mask(oyster_suit_terra, wc_region_terra)
+
+# Rasterize Exclusive Economic Zones data
+EEZ_rasterized <- terra::rasterize(wc_region_terra,
+                                   oyster_suit_terra,
+                                   field = "rgn_id") 
 
 # Find the total suitable area within each EEZ
-
+suitable_area <- terra::zonal(oyster_suit_EEZ, EEZ_rasterized, 
+                              fun = "sum", 
+                              na.rm = TRUE)
 
 
 
