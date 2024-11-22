@@ -287,8 +287,11 @@ oyster_suit <- SST_stars * Depth_stars
 
 # Set unsuitable area as NA
 oyster_suit[oyster_suit == 0] <- NA
+
+# 
+cropped_oyster_suit <- sf::st_crop(oyster_suit, wc_region)
 # Rasterize Exclusive Economic Zones data
-wc_region_raster <- st_rasterize(wc_region, oyster_suit)
+wc_region_raster <- st_rasterize(wc_region["rgn_id"], oyster_suit)
 
 
 # Find the total suitable area within each EEZ
