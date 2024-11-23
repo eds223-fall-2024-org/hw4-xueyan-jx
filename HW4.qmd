@@ -14,7 +14,13 @@ editor_options:
   chunk_output_type: console
 ---
 
-### 1. Library, function, and data preparation
+### Objective
+
+Determining which Exclusive Economic Zones (EEZ) on the West Coast of the US are best suited to developing marine aquaculture for several species of oysters ***and*** Dungeness Crab. Suitable locations will be determined based on the range of suitable sea surface temperature (SST) and depth values for the species.
+
+### Library and data preparation
+
+#### 1. Load libraries
 
 ```{r}
 # Load libraries
@@ -31,9 +37,11 @@ library(tidyverse)
 library(testthat)
 ```
 
+#### 2. Prepare data
+
 ```{r}
-# Load data
 #| code-fold: true
+# Load data
 
 ## West Coast EEZ
 wc_region <- sf::st_read(here::here("data","wc_regions_clean.shp"), quiet = TRUE)
@@ -102,266 +110,257 @@ if (!is.null(stack_raster)) {
 }
 ```
 
-### 2. Set workflow for selecting suitable environment conditions for Oyster
+### Form workflow for the two species
+
+#### 1. Select suitable environmental conditions for oysters
 
 ```{r}
 #| code-fold: true
-# Set workflow for selecting suitable environment conditions for oyster
+# Set workflow for selecting suitable environment conditions for oysters
 
-oysters <- function(Species, SST, Depth){
-  # Drop units of Baythemetry data
-  Depth_drop <- drop_units(Depth)
-  
-  # Set suitable values to 1 and unsuitable values to 0
-  # This process will generate "matrix" "array" data
-  SST_suit <- ifelse(SST[[1]] >= 11 & SST[[1]] <= 30, 1, 0)
-  Depth_suit <- ifelse(Depth_drop[[1]] >= -70 & Depth_drop[[1]] <= 0, 1, 0) 
-  
-  # Transform the "matrix" "array" data to "stars"
-  SST_stars <- st_as_stars(SST_suit, dimensions = st_dimensions(SST))
-  Depth_stars <- st_as_stars(Depth_suit, dimensions = st_dimensions(Depth))
-  
-  # Check if the new data match in resolution, extent, and CRS
-  ## Try to stack
-  stack_raster <- tryCatch({
-    c(SST_stars, Depth_stars)
-  }, error = function(e) {
-    NULL # If stacking fails, return NULL
-  })
-  ## Check if successfully stack
-  if (!is.null(stack_raster)) {
-    print("all match!")
-  } else {
-    print("not match")
-  }
-  
-  # Find suitable locations
-  oyster_suit <- SST_stars * Depth_stars
-
-  # Set unsuitable area as NA
-  oyster_suit[oyster_suit == 0] <- NA
-}
-
-# Crop the extent of suitable area to Exclusive Economic Zones
-cropped_oyster_suit <- stars::st_crop(oyster_suit, wc_region)
-# Find the total suitable area within each EEZ
-
-
-
-# Map the suitable area for oyster
-## Download base map from OSM of the bounding box
-background_data <- tmaptools::read_osm(sf::st_bbox(SST_extent))
-
-## Keep raster data the same CRS to OSM
-oyster_suit_sameCRS <- st_transform(oyster_suit, 
-                                    crs = st_crs(background_data))
-
-  ## Map
-  tm_shape(background_data) + 
-    tm_rgb() +
-    tm_shape(oyster_suit_sameCRS) +
-    tm_raster(palette = "red",
-              title = "",
-              labels = paste("Suitable area for", Species)) +
-    tm_credits("© OpenStreetMap contributors",
-              position=c("left", "bottom")) +
-    tm_layout(legend.text.size = 0.85,
-              legend.text.fontface = "bold",
-              legend.title.size = 1,
-              legend.title.fontface = "bold",
-              legend.position = c("left","bottom")) +
-  tm_scale_bar(position = c(0,0),
-              breaks = c(0,5,10,15)) +
-  tm_compass(position = c(0,0.8),
-            size = 1.3)
-  }
-```
-
-### 3. Set workflow for selecting suitable environment conditions for Dungeness Crab
-
-```{r}
-dungeness_crab <- function(Species, SST, Depth){
-  # Drop units of Baythemetry data
-  Depth_drop <- drop_units(Depth)
-  
-  # Set suitable values to 1 and unsuitable values to 0
-  # This process will generate "matrix" "array" data
-  SST_suit <- ifelse(SST[[1]] >= 3 & SST[[1]] <= 19, 1, 0)
-  Depth_suit <- ifelse(Depth_drop[[1]] >= --360 & Depth_drop[[1]] <= 0, 1, 0) 
-  
-  # Transform the "matrix" "array" data to "stars"
-  SST_stars <- st_as_stars(SST_suit, dimensions = st_dimensions(SST))
-  Depth_stars <- st_as_stars(Depth_suit, dimensions = st_dimensions(Depth))
-  
-  # Check if the new data match in resolution, extent, and CRS
-  ## Try to stack
-  stack_raster <- tryCatch({
-    c(SST_stars, Depth_stars)
-  }, error = function(e) {
-    NULL # If stacking fails, return NULL
-  })
-  ## Check if successfully stack
-  if (!is.null(stack_raster)) {
-    print("all match!")
-  } else {
-    print("not match")
-  }
-  
-
-  # Find suitable locations
-  crab_suit <- SST_stars * Depth_stars
-
-  # Set unsuitable area as NA
-  crab_suit[crab_suit == 0] <- NA
-
-  # Map the suitable area for crab
-  ## Download base map from OSM of the bounding box
-  background_data <- tmaptools::read_osm(sf::st_bbox(SST_extent))
-
-  ## Keep raster data the same CRS to OSM
-  crab_suit_sameCRS <- st_transform(crab_suit, 
-                                       crs = st_crs(background_data))
-
-  ## Map
-  tm_shape(background_data) + 
-    tm_rgb() +
-    tm_shape(crab_suit_sameCRS) +
-    tm_raster(palette = "purple",
-              title = "",
-              labels = paste("Suitable area for", Species)) +
-    tm_credits("© OpenStreetMap contributors",
-              position=c("left", "bottom")) +
-    tm_layout(legend.text.size = 0.85,
-              legend.text.fontface = "bold",
-              legend.title.size = 1,
-              legend.title.fontface = "bold",
-              legend.position = c("left","bottom")) +
-  tm_scale_bar(position = c(0,0),
-              breaks = c(0,5,10,15)) +
-  tm_compass(position = c(0,0.8),
-            size = 1.3)
-}
-```
-
-### 4. Generate suitable area for Oyster and Dungeness Crab
-
-```{r}
-oysters_map <- oysters(Species = "Oyster", 
-                   SST = SST_aveC,
-                   Depth = Bathymetry_resampled)
-
-dungeness_craba_map <- dungeness_crab(Species = "Dungeness Crab", 
-                                 SST = SST_aveC,
-                                 Depth = Bathymetry_resampled)
-
-tmap_arrange(oysters_map, dungeness_craba_map, ncol = 2)
-```
-
-```{r}
-## for test
+oysters <- function(Species, SST, Depth, EEZ, SST_extent){
   # Drop the units (m) of Bathymetry data
-  Depth <- drop_units(Bathymetry_resampled)
+  Depth <- drop_units(Depth)
   
-  # Set suitable values to 1 and unsuitable values to 0
+  # Set suitable condition to 1 and unsuitable condition to 0
   # This process will generates a "matrix"/"array" objective
-  SST_suit <- ifelse(SST_aveC[[1]] >= 11 & SST_aveC[[1]] <= 30, 1, 0)
+  SST_suit <- ifelse(SST[[1]] >= 11 & SST[[1]] <= 30, 1, 0)
   Depth_suit <- ifelse(Depth[[1]] >= -70 & Depth[[1]] <= 0, 1, 0) 
   
   # Transform the "matrix"/"array" objective to "stars" format
-  SST_stars <- st_as_stars(SST_suit, dimensions = st_dimensions(SST_aveC))
+  SST_stars <- st_as_stars(SST_suit, dimensions = st_dimensions(SST))
   Depth_stars <- st_as_stars(Depth_suit, 
                              dimensions = st_dimensions(Depth))
   ## Try to stack
-stack_raster <- tryCatch({
-  c(SST_stars, Depth_stars)  # Try stacking the rasters
-}, error = function(e) {
-  NULL  # If stacking fails, return NULL
-})
-
-## Check if successfully stack 
-if (!is.null(stack_raster)) {
-  print("all match!")
-} else {
-  print("not match")
-}
+  stack_raster <- tryCatch({
+    c(SST_stars, Depth_stars)  # Try stacking the rasters
+  }, error = function(e) {
+    NULL  # If stacking fails, return NULL
+  })
   
-# Find suitable locations
-oyster_suit <- SST_stars * Depth_stars
-
-# Set unsuitable area as NA
-oyster_suit[oyster_suit == 0] <- NA
-
-
-# Transform data format from stars/sf to terra
-# Keep same projection (EPSG:5070, Projection method: Albers Equal Area, unit:m)
-oyster_suit_terra <- terra::rast(oyster_suit) %>%
+  ## Check if successfully stack 
+  if (!is.null(stack_raster)) {
+    print("all match!")
+  } else {
+    print("not match")
+  }
+    
+  # Find suitable locations
+  oyster_suit <- SST_stars * Depth_stars
+  
+  # Set unsuitable area as NA
+  oyster_suit[oyster_suit == 0] <- NA
+  
+  
+  # Transform data format from stars/sf to terra
+  # Keep same projection (EPSG:5070, Projection method: Albers Equal Area, unit:m)
+  oyster_suit_terra <- terra::rast(oyster_suit) %>%
+                       terra::project("EPSG:5070")
+  wc_region_terra <- terra::vect(EEZ) %>%
                      terra::project("EPSG:5070")
-wc_region_terra <- terra::vect(wc_region)%>%
-                     terra::project("EPSG:5070")
-
-
-# Find suitable area within the extent of Exclusive Economic Zones
-oyster_suit_EEZ <- terra::mask(oyster_suit_terra, wc_region_terra)
-
-# Rasterize Exclusive Economic Zones data
-EEZ_rasterized <- terra::rasterize(wc_region_terra,
-                                   oyster_suit_terra,
-                                   field = "rgn_id") 
-
-# Find suitable area within EEZ
-## Generate a raster with area information
-oyster_cell_size <- terra::cellSize(oyster_suit_EEZ)
-
-## Find suitable area within each EEZ
-suitable_area <- terra::zonal(oyster_cell_size, EEZ_rasterized, 
-                              fun = "sum", 
-                              na.rm = TRUE) 
-
-## Transform the unit of the data and add the name of EEZ
-suitable_area$area_km2 <- suitable_area$area / 1e6
-suitable_area$EEZ_name <- c("Oregon", "Northern California",
-                            "Central California", "Southern California",
-                            "Washington")
-
-## Generate a summary table
-
-
-# Map the suitable area for oyster
-## Download base map from OSM of the bounding box
-background_data <- tmaptools::read_osm(sf::st_bbox(SST_extent))
-
-## Keep raster data the same CRS to OSM
-oyster_suit_sameCRS <- st_transform(oyster_suit, 
-                                       crs = st_crs(background_data))
-
-## Map
-oyster_map <- tm_shape(background_data) + 
-                tm_rgb() +
-                tm_shape(oyster_suit_sameCRS) +
-                tm_raster(palette = "red",
-                          title = "",
-                          labels = "Suitable area for Oyster" ) +
-                tm_credits("© OpenStreetMap contributors",
-                           position=c("left", "bottom")) +
-                tm_layout(legend.text.size = 0.85,
-                          legend.text.fontface = "bold",
-                          legend.title.size = 1,
-                          legend.title.fontface = "bold",
-                          legend.position = c("left","bottom")) +
-              tm_scale_bar(position = c(0,0),
-                           breaks = c(0,5,10,15)) +
-              tm_compass(position = c(0,0.8),
-                         size = 1.3)
-return(list(map = oyster_map, area_table = suitable_area))
+  
+  # Find suitable locations within the extent of Exclusive Economic Zones
+  oyster_suit_EEZ <- terra::mask(oyster_suit_terra, wc_region_terra)
+  
+  # Rasterize Exclusive Economic Zones data
+  EEZ_rasterized <- terra::rasterize(wc_region_terra,
+                                     oyster_suit_terra,
+                                     field = "rgn_id") 
+  EEZ_mask <- mask(EEZ_rasterized, oyster_suit_EEZ)
+  
+  # Calculate suitable area for EEZs
+  ## Generate a raster with area information
+  cell_size <- terra::cellSize(oyster_suit_EEZ)
+  ## Mask EEZ on the area raster
+  cell_area_masked <- mask(cell_size, EEZ_mask)
+  
+  ## Calculate suitable area for each EEZ
+  suitable_area <- terra::zonal(cell_area_masked, EEZ_rasterized, 
+                                fun = "sum", 
+                                na.rm = TRUE) 
+  
+  ## Transform the unit of the data and add the name of EEZ
+  suitable_area$area_km2 <- suitable_area$area / 1e6
+  suitable_area$EEZ_name <- c("Oregon", "Northern California",
+                              "Central California", "Southern California",
+                              "Washington")
+  
+  ## Generate a summary table
+  suitable_area <- suitable_area[, c("EEZ_name", "area_km2")]
+  suitable_area_tab <- kable(
+    suitable_area, 
+    caption = "Table 1 Suitable Area of Oyster in Each Exclusive Economic Zones (km²)",
+    col.names = c("Name", "Area (km²)")) 
+  
+  
+  # Map the suitable locations for oyster
+  ## Download base map from OSM of the bounding box
+  background_data <- tmaptools::read_osm(sf::st_bbox(SST_extent))
+  
+  ## Keep raster data the same CRS to OSM
+  oyster_suit_sameCRS <- st_transform(oyster_suit, 
+                                         crs = st_crs(background_data))
+  
+  ## Map
+  oyster_map <- tm_shape(background_data) + 
+                  tm_rgb() +
+                  tm_shape(oyster_suit_sameCRS) +
+                  tm_raster(palette = "red",
+                            title = "",
+                            labels = paste("Suitable locations for", Species)) +
+                  tm_credits("© OpenStreetMap contributors",
+                             position=c("left", "bottom")) +
+                  tm_layout(legend.text.size = 0.85,
+                            legend.text.fontface = "bold",
+                            legend.title.size = 1,
+                            legend.title.fontface = "bold",
+                            legend.position = c(0.05, 0.2)) +
+                tm_scale_bar(position = c(0.05, 0.1),
+                             breaks = c(0, 100, 200, 300)) +
+                tm_compass(position = c(0.05, 0.8),
+                           size = 1.3)
+  map_table <- list(oysterMap = oyster_map, oysterArea_Table = suitable_area_tab)
+  return(map_table)
+}
 ```
+
+#### 2. Select suitable environmental conditions for Dungeness Crab
 
 ```{r}
+#| code-fold: true
+# Set workflow for selecting suitable environment conditions for crab
+
+crabs <- function(Species, SST, Depth, EEZ, SST_extent){
+  # Drop the units (m) of Bathymetry data
+  Depth <- drop_units(Depth)
+  
+  # Set suitable condition to 1 and unsuitable condition to 0
+  # This process will generates a "matrix"/"array" objective
+  SST_suit <- ifelse(SST[[1]] >= 3 & SST[[1]] <= 19, 1, 0)
+  Depth_suit <- ifelse(Depth[[1]] >= -360 & Depth[[1]] <= 0, 1, 0) 
+  
+  # Transform the "matrix"/"array" objective to "stars" format
+  SST_stars <- st_as_stars(SST_suit, dimensions = st_dimensions(SST))
+  Depth_stars <- st_as_stars(Depth_suit, 
+                             dimensions = st_dimensions(Depth))
+  ## Try to stack
+  stack_raster <- tryCatch({
+    c(SST_stars, Depth_stars)  # Try stacking the rasters
+  }, error = function(e) {
+    NULL  # If stacking fails, return NULL
+  })
+  
+  ## Check if successfully stack 
+  if (!is.null(stack_raster)) {
+    print("all match!")
+  } else {
+    print("not match")
+  }
+    
+  # Find suitable locations
+  crab_suit <- SST_stars * Depth_stars
+  
+  # Set unsuitable area as NA
+  crab_suit[crab_suit == 0] <- NA
+  
+  
+  # Transform data format from stars/sf to terra
+  # Keep same projection (EPSG:5070, Projection method: Albers Equal Area, unit:m)
+  crab_suit_terra <- terra::rast(crab_suit) %>%
+                     terra::project("EPSG:5070")
+  wc_region_terra <- terra::vect(EEZ) %>%
+                     terra::project("EPSG:5070")
+  
+  
+  # Find suitable locations within the extent of Exclusive Economic Zones
+  crab_suit_EEZ <- terra::mask(crab_suit_terra, wc_region_terra)
+  
+  # Rasterize Exclusive Economic Zones data
+  EEZ_rasterized <- terra::rasterize(wc_region_terra,
+                                     crab_suit_terra,
+                                     field = "rgn_id") 
+  EEZ_mask <- mask(EEZ_rasterized, crab_suit_EEZ)
+  
+  # Calculate suitable area for EEZs
+  ## Generate a raster with area information
+  cell_size <- terra::cellSize(crab_suit_EEZ)
+  ## Mask EEZ on the area raster
+  cell_area_masked <- mask(cell_size, EEZ_mask)
+  
+  ## Calculate suitable area for each EEZ
+  suitable_area <- terra::zonal(cell_area_masked, EEZ_rasterized, 
+                                fun = "sum", 
+                                na.rm = TRUE)  
+  
+  ## Transform the unit of the data and add the name of EEZ
+  suitable_area$area_km2 <- suitable_area$area / 1e6
+  suitable_area$EEZ_name <- c("Oregon", "Northern California",
+                              "Central California", "Southern California",
+                              "Washington")
+  ## Generate a summary table
+  suitable_area <- suitable_area[, c("EEZ_name", "area_km2")]
+  suitable_area_tab <- kable(
+    suitable_area, 
+    caption = "Table 2 Suitable Area for Dungeness Crab in Each Exclusive Economic Zones (km²)",
+    col.names = c("Name", "Area (km²)")) 
+  
+  
+  
+  # Map the suitable locations for crab
+  ## Download base map from OSM of the bounding box
+  background_data <- tmaptools::read_osm(sf::st_bbox(SST_extent))
+  
+  ## Keep raster data the same CRS to OSM
+  crab_suit_sameCRS <- st_transform(crab_suit,
+                                    crs = st_crs(background_data))
+  
+  ## Map
+  crab_map <- tm_shape(background_data) + 
+                  tm_rgb() +
+                  tm_shape(crab_suit_sameCRS) +
+                  tm_raster(palette = "purple",
+                            title = "",
+                            labels = paste("Suitable locations for", Species)) +
+                  tm_credits("© OpenStreetMap contributors",
+                             position=c("left", "bottom")) +
+                  tm_layout(legend.text.size = 0.85,
+                            legend.text.fontface = "bold",
+                            legend.title.size = 1,
+                            legend.title.fontface = "bold",
+                            legend.position = c(0.05, 0.2)) +
+                tm_scale_bar(position = c(0.05, 0.1),
+                             breaks = c(0, 100, 200, 300)) +
+                tm_compass(position = c(0.05, 0.8),
+                           size = 1.3)
+  map_table <- list(crabMap = crab_map, crabArea_Table = suitable_area_tab)
+  return(map_table)
+}
 ```
+
+### Generate suitable area for oysters and Dungeness Crab
+
+```{r}
+oysters <- oysters("oysters", SST = SST_aveC, Depth = Bathymetry_resampled, EEZ = wc_region, SST_extent = SST_extent)
+
+crabs <- crabs("Dungeness Crab", SST = SST_aveC, Depth = Bathymetry_resampled, EEZ = wc_region, SST_extent = SST_extent)
+
+tmap_arrange(oysters$oysterMap, crabs$crabMap, ncol = 2)
+```
+
+Figure 1 Suitable locations for oysters (left) and Dungeness Crab
+
+```{r}
+oysters$oysterArea_Table
+crabs$crabArea_Table
+```
+
+According to Figure 1, we can see that both oysters and Dungeness Crab have wide distribution across the west coast of the US. Particularly, oysters are more concentrated in the southern part, but Dungeness Crab prefers the northern part. The statistic of suitable areas within each Exclusive Economic Zone shows similar patterns, where Oregon and Washington are more suitable for Dungeness Crab aquaculture, while Central and Southern California are more suitable for oysters aquaculture (Table 1 and Table 2).
 
 ### Citation
 
 | Reference | Citation | Link |
 |------------------------|------------------------|------------------------|
 | OpenStreetMap | OpenStreetMap contributors. (2015) Planet dump. \[November 21, 2024\]. Retrieved from [https://planet.openstree](https://planet.openstreetmap.org/) | <https://download.geofabrik.de/> |
-| SeaLifeBase - Oyster/Dungeness Crab |  | <https://www.sealifebase.ca/search.php> |
-|  |  |  |
+| SeaLifeBase - Oyster/Dungeness Crab | SeaLifeBase. \[November 21, 2024\].Retrieved from <https://www.sealifebase.ca/search.php> | <https://www.sealifebase.ca/search.php> |
+| NOAA’s 5km Daily Global Satellite Sea Surface Temperature Anomaly v3.1. | NOAA Coral Reef Watch. 2024, updated daily. *NOAA Coral Reef Watch Version 3.1 Daily 5km Satellite Regional Virtual Station Time Series Data for West Coast of the US*, 2008-2012. College Park, Maryland, USA: NOAA Coral Reef Watch. Data set accessed 2024-11-19 at <https://coralreefwatch.noaa.gov/product/5km/index_5km_ssta.php> | <https://coralreefwatch.noaa.gov/product/5km/index_5km_ssta.php> |
+| General Bathymetric Chart of the Oceans (GEBCO) | GEBCO. \[November 21, 2024\]. Retrieved from <https://www.gebco.net/data_and_products/gridded_bathymetry_data/#area> | <https://www.gebco.net/data_and_products/gridded_bathymetry_data/#area> |

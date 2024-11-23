@@ -1,0 +1,112 @@
+---
+title: "fortest"
+format: html
+editor: visual
+---
+
+```{r}
+## for test
+  # Drop the units (m) of Bathymetry data
+  Depth <- drop_units(Bathymetry_resampled)
+  
+  # Set suitable values to 1 and unsuitable values to 0
+  # This process will generates a "matrix"/"array" objective
+  SST_suit <- ifelse(SST_aveC[[1]] >= 3 & SST_aveC[[1]] <= 19, 1, 0)
+  Depth_suit <- ifelse(Depth[[1]] >= -360 & Depth[[1]] <= 0, 1, 0) 
+  
+  # Transform the "matrix"/"array" objective to "stars" format
+  SST_stars <- st_as_stars(SST_suit, dimensions = st_dimensions(SST_aveC))
+  Depth_stars <- st_as_stars(Depth_suit, 
+                             dimensions = st_dimensions(Depth))
+  ## Try to stack
+stack_raster <- tryCatch({
+  c(SST_stars, Depth_stars)  # Try stacking the rasters
+}, error = function(e) {
+  NULL  # If stacking fails, return NULL
+})
+
+## Check if successfully stack 
+if (!is.null(stack_raster)) {
+  print("all match!")
+} else {
+  print("not match")
+}
+  
+# Find suitable locations
+oyster_suit <- SST_stars * Depth_stars
+
+# Set unsuitable area as NA
+oyster_suit[oyster_suit == 0] <- NA
+
+
+# Transform data format from stars/sf to terra
+# Keep same projection (EPSG:5070, Projection method: Albers Equal Area, unit:m)
+oyster_suit_terra <- terra::rast(oyster_suit) %>%
+                     terra::project("EPSG:5070")
+wc_region_terra <- terra::vect(wc_region)%>%
+                     terra::project("EPSG:5070")
+
+
+# Find suitable area within the extent of Exclusive Economic Zones
+oyster_suit_EEZ <- terra::mask(oyster_suit_terra, wc_region_terra)
+
+
+# Rasterize Exclusive Economic Zones data
+EEZ_rasterized <- terra::rasterize(wc_region_terra,
+                                   oyster_suit_terra,
+                                   field = "rgn_id") 
+EEZ_mask <- mask(EEZ_rasterized, oyster_suit_EEZ)
+
+# Find suitable area within EEZ
+## Generate a raster with area information
+oyster_cell_size <- terra::cellSize(oyster_suit_EEZ)
+## Mask EEZ on the area raster
+cell_area_masked <- mask(oyster_cell_size, EEZ_mask)
+
+## Find suitable area within each EEZ
+suitable_area <- terra::zonal(cell_area_masked, EEZ_rasterized, 
+                              fun = "sum", 
+                              na.rm = TRUE) 
+
+## Transform the unit of the data and add the name of EEZ
+suitable_area$area_km2 <- suitable_area$area / 1e6
+suitable_area$EEZ_name <- c("Oregon", "Northern California",
+                            "Central California", "Southern California",
+                            "Washington")
+
+## Generate a summary table
+suitable_area <- suitable_area[, c("EEZ_name", "area_km2")]
+suitable_area_tab <- kable(suitable_area, 
+                           caption = "Suitable Area of Oyster in 
+                           Each Exclusive Economic Zones (km²)",
+                           col.names = c("Name", "Area (km²)")) 
+
+
+# Map the suitable area for oyster
+## Download base map from OSM of the bounding box
+background_data <- tmaptools::read_osm(sf::st_bbox(SST_extent))
+
+## Keep raster data the same CRS to OSM
+oyster_suit_sameCRS <- st_transform(oyster_suit, 
+                                       crs = st_crs(background_data))
+
+## Map
+oyster_map <- tm_shape(background_data) + 
+                tm_rgb() +
+                tm_shape(oyster_suit_sameCRS) +
+                tm_raster(palette = "red",
+                          title = "",
+                          labels = "Suitable area for Oyster" ) +
+                tm_credits("© OpenStreetMap contributors",
+                           position=c("left", "bottom")) +
+                tm_layout(legend.text.size = 0.85,
+                          legend.text.fontface = "bold",
+                          legend.title.size = 1,
+                          legend.title.fontface = "bold",
+                          legend.position = c("left","bottom")) +
+              tm_scale_bar(position = c(0,0),
+                           breaks = c(0,5,10,15)) +
+              tm_compass(position = c(0,0.8),
+                         size = 1.3)
+map_table <- list(map = oyster_map, area_table = suitable_area_tab)
+```
