@@ -118,14 +118,15 @@ if (!is.null(stack_raster)) {
 #| code-fold: true
 # Set workflow for selecting suitable environment conditions for oysters
 
-oysters <- function(Species, SST, Depth, EEZ, SST_extent){
+oysters <- function(Species, SST, Depth, maxT, minT, 
+                    maxDepth, minDepth, EEZ, SST_extent){
   # Drop the units (m) of Bathymetry data
   Depth <- drop_units(Depth)
   
   # Set suitable condition to 1 and unsuitable condition to 0
   # This process will generates a "matrix"/"array" objective
-  SST_suit <- ifelse(SST[[1]] >= 11 & SST[[1]] <= 30, 1, 0)
-  Depth_suit <- ifelse(Depth[[1]] >= -70 & Depth[[1]] <= 0, 1, 0) 
+  SST_suit <- ifelse(SST[[1]] >= minT & SST[[1]] <= maxT, 1, 0)
+  Depth_suit <- ifelse(Depth[[1]] >= minDepth & Depth[[1]] <= maxDepth, 1, 0) 
   
   # Transform the "matrix"/"array" objective to "stars" format
   SST_stars <- st_as_stars(SST_suit, dimensions = st_dimensions(SST))
@@ -228,14 +229,15 @@ oysters <- function(Species, SST, Depth, EEZ, SST_extent){
 #| code-fold: true
 # Set workflow for selecting suitable environment conditions for crab
 
-crabs <- function(Species, SST, Depth, EEZ, SST_extent){
+crabs <- function(Species, SST, Depth, maxT, minT, 
+                    maxDepth, minDepth, EEZ, SST_extent){
   # Drop the units (m) of Bathymetry data
   Depth <- drop_units(Depth)
   
   # Set suitable condition to 1 and unsuitable condition to 0
   # This process will generates a "matrix"/"array" objective
-  SST_suit <- ifelse(SST[[1]] >= 3 & SST[[1]] <= 19, 1, 0)
-  Depth_suit <- ifelse(Depth[[1]] >= -360 & Depth[[1]] <= 0, 1, 0) 
+  SST_suit <- ifelse(SST[[1]] >= minT & SST[[1]] <= maxT, 1, 0)
+  Depth_suit <- ifelse(Depth[[1]] >= minDepth & Depth[[1]] <= maxDepth, 1, 0) 
   
   # Transform the "matrix"/"array" objective to "stars" format
   SST_stars <- st_as_stars(SST_suit, dimensions = st_dimensions(SST))
@@ -336,9 +338,15 @@ crabs <- function(Species, SST, Depth, EEZ, SST_extent){
 ### Generate suitable area for oysters and Dungeness Crab
 
 ```{r}
-oysters <- oysters("oysters", SST = SST_aveC, Depth = Bathymetry_resampled, EEZ = wc_region, SST_extent = SST_extent)
+oysters <- oysters("oysters", SST = SST_aveC, Depth = Bathymetry_resampled, 
+                   maxT = 30, minT = 11, 
+                   maxDepth = 0, minDepth = -70,
+                   EEZ = wc_region, SST_extent = SST_extent)
 
-crabs <- crabs("Dungeness Crab", SST = SST_aveC, Depth = Bathymetry_resampled, EEZ = wc_region, SST_extent = SST_extent)
+crabs <- crabs("Dungeness Crab", SST = SST_aveC, Depth = Bathymetry_resampled, 
+               maxT = 19, minT = 3, 
+               maxDepth = 0, minDepth = -360,
+               EEZ = wc_region, SST_extent = SST_extent)
 
 tmap_arrange(oysters$oysterMap, crabs$crabMap, ncol = 2)
 ```
