@@ -35,6 +35,7 @@ library(knitr)          # for generating table
 library(dplyr)
 library(tidyverse)
 library(testthat)
+library(viridisLite)
 ```
 
 #### 2. Prepare data
@@ -132,26 +133,26 @@ oysters <- function(Species, SST, Depth, maxT, minT,
   SST_stars <- st_as_stars(SST_suit, dimensions = st_dimensions(SST))
   Depth_stars <- st_as_stars(Depth_suit, 
                              dimensions = st_dimensions(Depth))
-  ## Try to stack
+  # Try to stack
   stack_raster <- tryCatch({
     c(SST_stars, Depth_stars)  # Try stacking the rasters
   }, error = function(e) {
     NULL  # If stacking fails, return NULL
   })
   
-  ## Check if successfully stack 
+  # Check if successfully stack
   if (!is.null(stack_raster)) {
     print("all match!")
   } else {
     print("not match")
   }
     
+  
   # Find suitable locations
   oyster_suit <- SST_stars * Depth_stars
   
   # Set unsuitable area as NA
   oyster_suit[oyster_suit == 0] <- NA
-  
   
   # Transform data format from stars/sf to terra
   # Keep same projection (EPSG:5070, Projection method: Albers Equal Area, unit:m)
@@ -167,19 +168,16 @@ oysters <- function(Species, SST, Depth, maxT, minT,
   EEZ_rasterized <- terra::rasterize(wc_region_terra,
                                      oyster_suit_terra,
                                      field = "rgn_id") 
-  EEZ_mask <- mask(EEZ_rasterized, oyster_suit_EEZ)
   
   # Calculate suitable area for EEZs
-  ## Generate a raster with area information
+  ## Generate a raster with area information (for all cells)
   cell_size <- terra::cellSize(oyster_suit_EEZ)
-  ## Mask EEZ on the area raster
-  cell_area_masked <- mask(cell_size, EEZ_mask)
-  
+  ## Mask suitable locations on the area raster
+  cell_area_masked <- mask(cell_size, oyster_suit_EEZ)
   ## Calculate suitable area for each EEZ
   suitable_area <- terra::zonal(cell_area_masked, EEZ_rasterized, 
                                 fun = "sum", 
                                 na.rm = TRUE) 
-  
   ## Transform the unit of the data and add the name of EEZ
   suitable_area$area_km2 <- suitable_area$area / 1e6
   suitable_area$EEZ_name <- c("Oregon", "Northern California",
@@ -192,6 +190,10 @@ oysters <- function(Species, SST, Depth, maxT, minT,
     suitable_area, 
     caption = "Table 1 Suitable Area of Oyster in Each Exclusive Economic Zones (km²)",
     col.names = c("Name", "Area (km²)")) 
+  
+  # Join total suitable area information to original EEZ (sf file)
+  EEZ_suitable_area <- left_join(wc_region, suitable_area,
+                                by = c("rgn" = "EEZ_name"))
   
   
   # Map the suitable locations for oyster
@@ -271,22 +273,19 @@ crabs <- function(Species, SST, Depth, maxT, minT,
   wc_region_terra <- terra::vect(EEZ) %>%
                      terra::project("EPSG:5070")
   
-  
   # Find suitable locations within the extent of Exclusive Economic Zones
   crab_suit_EEZ <- terra::mask(crab_suit_terra, wc_region_terra)
   
   # Rasterize Exclusive Economic Zones data
   EEZ_rasterized <- terra::rasterize(wc_region_terra,
                                      crab_suit_terra,
-                                     field = "rgn_id") 
-  EEZ_mask <- mask(EEZ_rasterized, crab_suit_EEZ)
+                                     field = "rgn_id")
   
   # Calculate suitable area for EEZs
-  ## Generate a raster with area information
+  ## Generate a raster with area information (for all cells)
   cell_size <- terra::cellSize(crab_suit_EEZ)
-  ## Mask EEZ on the area raster
-  cell_area_masked <- mask(cell_size, EEZ_mask)
-  
+  ## Mask suitable locations on the area raster
+  cell_area_masked <- mask(cell_size, crab_suit_EEZ)
   ## Calculate suitable area for each EEZ
   suitable_area <- terra::zonal(cell_area_masked, EEZ_rasterized, 
                                 fun = "sum", 
@@ -302,8 +301,12 @@ crabs <- function(Species, SST, Depth, maxT, minT,
   suitable_area_tab <- kable(
     suitable_area, 
     caption = "Table 2 Suitable Area for Dungeness Crab in Each Exclusive Economic Zones (km²)",
-    col.names = c("Name", "Area (km²)")) 
+    col.names = c("Name", "Area (km²)"))
   
+  # Join total suitable area information to original EEZ (sf file)
+  EEZ_suitable_area <- left_join(wc_region, suitable_area,
+                              by = c("rgn" = "EEZ_name"))
+
   
   
   # Map the suitable locations for crab
