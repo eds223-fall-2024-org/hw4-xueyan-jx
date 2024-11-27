@@ -364,7 +364,7 @@ According to Figure 1, we can see that both oysters and Dungeness Crab have wide
 
 ### Citations
 
-| Reference | Citation | Link |
+| Data/Reference | Citation | Link |
 |------------------------|------------------------|------------------------|
 | OpenStreetMap | OpenStreetMap contributors. (2015) Planet dump. \[November 21, 2024\]. Retrieved from [https://planet.openstree](https://planet.openstreetmap.org/) | <https://download.geofabrik.de/> |
 | SeaLifeBase - Oyster/Dungeness Crab | SeaLifeBase. \[November 21, 2024\].Retrieved from <https://www.sealifebase.ca/search.php> | <https://www.sealifebase.ca/search.php> |
