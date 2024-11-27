@@ -113,7 +113,7 @@ if (!is.null(stack_raster)) {
 
 ### Form workflow for the two species
 
-#### 1. Select suitable environmental conditions for oysters
+#### 1. Select suitable locations for oysters
 
 ```{r}
 #| code-fold: true
@@ -169,7 +169,7 @@ oysters <- function(Species, SST, Depth, maxT, minT,
                                      oyster_suit_terra,
                                      field = "rgn_id") 
   
-  # Calculate suitable area for EEZs
+  # Calculate suitable area for EEZs and join this to original EEZ (sf file)
   ## Generate a raster with area information (for all cells)
   cell_size <- terra::cellSize(oyster_suit_EEZ)
   ## Mask suitable locations on the area raster
@@ -179,53 +179,71 @@ oysters <- function(Species, SST, Depth, maxT, minT,
                                 fun = "sum", 
                                 na.rm = TRUE) 
   ## Transform the unit of the data and add the name of EEZ
-  suitable_area$area_km2 <- suitable_area$area / 1e6
+  suitable_area$suitable_area_km2 <- suitable_area$area / 1e6
   suitable_area$EEZ_name <- c("Oregon", "Northern California",
                               "Central California", "Southern California",
                               "Washington")
   
-  ## Generate a summary table
-  suitable_area <- suitable_area[, c("EEZ_name", "area_km2")]
-  suitable_area_tab <- kable(
-    suitable_area, 
-    caption = "Table 1 Suitable Area of Oyster in Each Exclusive Economic Zones (km²)",
-    col.names = c("Name", "Area (km²)")) 
+  ## Only keep useful information
+  suitable_area <- suitable_area[, c("EEZ_name", "suitable_area_km2")]
   
-  # Join total suitable area information to original EEZ (sf file)
+  ## Join total suitable area information to original EEZ (sf file)
   EEZ_suitable_area <- left_join(wc_region, suitable_area,
                                 by = c("rgn" = "EEZ_name"))
   
   
-  # Map the suitable locations for oyster
+  # Map the suitable locations for oyster and EEZ with total suitable area
   ## Download base map from OSM of the bounding box
   background_data <- tmaptools::read_osm(sf::st_bbox(SST_extent))
   
   ## Keep raster data the same CRS to OSM
   oyster_suit_sameCRS <- st_transform(oyster_suit, 
                                          crs = st_crs(background_data))
+
+  ## Get unique area values for each EEZ and sort them
+  unique_values <- sort(unique(EEZ_suitable_area$suitable_area_km2)) 
   
-  ## Map
-  oyster_map <- tm_shape(background_data) + 
-                  tm_rgb() +
-                  tm_shape(oyster_suit_sameCRS) +
-                  tm_raster(palette = "red",
-                            title = "",
-                            labels = paste("Suitable locations for", Species)) +
-                  tm_credits("© OpenStreetMap contributors",
-                             position=c("left", "bottom")) +
-                  tm_layout(legend.text.size = 0.9,
-                            legend.text.fontface = "bold",
-                            legend.position = c(0.05, 0.2)) +
-                tm_scale_bar(position = c(0.05, 0.1),
-                             breaks = c(0, 100, 200, 300)) +
-                tm_compass(position = c(0.05, 0.8),
-                           size = 1.3)
-  map_table <- list(oysterMap = oyster_map, oysterArea_Table = suitable_area_tab)
-  return(map_table)
+  ## Generate breaks
+  breaks <- c(unique_values, max(unique_values) + 1)
+  
+  ## Generate palette
+  palette <- viridisLite::viridis(length(unique_values))
+  
+  oyster_EEZ_suitable_map <- tm_shape(background_data) + 
+                               tm_rgb() +
+    
+                               tm_shape(EEZ_suitable_area) +
+                               tm_polygons(
+                                 col = "suitable_area_km2",
+                                 breaks = breaks,
+                                 labels = as.character(ceiling(unique_values)),
+                                 palette = palette,
+                                 title = "Total suitable area(km²)") +
+    
+                               tm_shape(oyster_suit_sameCRS) +
+                               tm_raster(palette = "red",
+                                  title = "",
+                                  labels = "Suitable locations" ) +
+    
+                               tm_shape(EEZ_suitable_area) +
+                                 tm_text("rgn", size = 0.5) +
+                               
+                               tm_credits("© OpenStreetMap contributors",
+                                           position=c("left", "bottom")) +
+                               tm_layout(legend.text.size = 0.7,
+                                         legend.title.size = 1,
+                                         legend.title.fontface = "bold",
+                                         legend.outside = TRUE,
+                                         panel.labels = "(B)",
+                                         panel.label.bg.color = "white") +
+                               tm_scale_bar(position = c(0.05, 0.1),
+                                            breaks = c(0, 100, 200, 300, 400)) +
+                               tm_compass(position = c(0.05, 0.8),
+                                          size = 1.3)
 }
 ```
 
-#### 2. Select suitable environmental conditions for Dungeness Crab
+#### 2. Select suitable locations for Dungeness Crab
 
 ```{r}
 #| code-fold: true
@@ -281,7 +299,7 @@ crabs <- function(Species, SST, Depth, maxT, minT,
                                      crab_suit_terra,
                                      field = "rgn_id")
   
-  # Calculate suitable area for EEZs
+  # Calculate suitable area for EEZs and join this to original EEZ (sf file)
   ## Generate a raster with area information (for all cells)
   cell_size <- terra::cellSize(crab_suit_EEZ)
   ## Mask suitable locations on the area raster
@@ -292,24 +310,20 @@ crabs <- function(Species, SST, Depth, maxT, minT,
                                 na.rm = TRUE)  
   
   ## Transform the unit of the data and add the name of EEZ
-  suitable_area$area_km2 <- suitable_area$area / 1e6
+  suitable_area$suitable_area_km2 <- suitable_area$area / 1e6
   suitable_area$EEZ_name <- c("Oregon", "Northern California",
                               "Central California", "Southern California",
                               "Washington")
-  ## Generate a summary table
-  suitable_area <- suitable_area[, c("EEZ_name", "area_km2")]
-  suitable_area_tab <- kable(
-    suitable_area, 
-    caption = "Table 2 Suitable Area for Dungeness Crab in Each Exclusive Economic Zones (km²)",
-    col.names = c("Name", "Area (km²)"))
+  ## Only keep useful information
+  suitable_area <- suitable_area[, c("EEZ_name", "suitable_area_km2")]
   
-  # Join total suitable area information to original EEZ (sf file)
+  ## Join total suitable area information to original EEZ (sf file)
   EEZ_suitable_area <- left_join(wc_region, suitable_area,
                               by = c("rgn" = "EEZ_name"))
 
   
   
-  # Map the suitable locations for crab
+  # Map the suitable locations for crab and EEZ with total suitable area
   ## Download base map from OSM of the bounding box
   background_data <- tmaptools::read_osm(sf::st_bbox(SST_extent))
   
@@ -317,53 +331,72 @@ crabs <- function(Species, SST, Depth, maxT, minT,
   crab_suit_sameCRS <- st_transform(crab_suit,
                                     crs = st_crs(background_data))
   
-  ## Map
-  crab_map <- tm_shape(background_data) + 
-                  tm_rgb() +
-                  tm_shape(crab_suit_sameCRS) +
-                  tm_raster(palette = "purple",
-                            title = "",
-                            labels = paste("Suitable locations\nfor", Species)) +
-                  tm_credits("© OpenStreetMap contributors",
-                             position=c("left", "bottom")) +
-                  tm_layout(legend.text.size = 0.9,
-                            legend.text.fontface = "bold",
-                            legend.position = c(0.05, 0.2)) +
-                tm_scale_bar(position = c(0.05, 0.1),
-                             breaks = c(0, 100, 200, 300)) +
-                tm_compass(position = c(0.05, 0.8),
-                           size = 1.3)
-  map_table <- list(crabMap = crab_map, crabArea_Table = suitable_area_tab)
-  return(map_table)
+  ## Get unique area values for each EEZ and sort them
+  unique_values <- sort(unique(EEZ_suitable_area$suitable_area_km2)) 
+  
+  ## Generate breaks
+  breaks <- c(unique_values, max(unique_values) + 1)
+  
+  ## Generate palette
+  palette <- viridisLite::viridis(length(unique_values))
+  
+  crab_EEZ_suitable_map <- tm_shape(background_data) + 
+                             tm_rgb() +
+    
+                           tm_shape(EEZ_suitable_area) +
+                             tm_polygons(
+                               col = "suitable_area_km2",
+                               breaks = breaks,
+                               labels = as.character(ceiling(unique_values)),
+                               palette = palette,
+                               title = "Total suitable area(km²)") +
+    
+                           tm_shape(crab_suit_sameCRS) +
+                             tm_raster(palette = "purple",
+                                title = "",
+                                labels = "Suitable locations" ) +
+    
+                           tm_shape(EEZ_suitable_area) +
+                             tm_text("rgn", size = 0.5) +
+    
+                           tm_credits("© OpenStreetMap contributors",
+                                      position=c("left", "bottom")) +
+                           tm_layout(legend.text.size = 0.7,
+                                     legend.title.size = 1,
+                                     legend.title.fontface = "bold",
+                                     legend.outside = TRUE) +
+                           tm_scale_bar(position = c(0.05, 0.1),
+                                        breaks = c(0, 100, 200, 300, 400)) +
+                           tm_compass(position = c(0.05, 0.8),
+                                      size = 1.3)
 }
 ```
 
 ### Generate suitable area for oysters and Dungeness Crab
 
 ```{r}
-oysters <- oysters("oysters", SST = SST_aveC, Depth = Bathymetry_resampled, 
+oysters <- oysters(Species = "oysters", 
+                   SST = SST_aveC, Depth = Bathymetry_resampled, 
                    maxT = 30, minT = 11, 
                    maxDepth = 0, minDepth = -70,
                    EEZ = wc_region, SST_extent = SST_extent)
 
-crabs <- crabs("Dungeness Crab", SST = SST_aveC, Depth = Bathymetry_resampled, 
+crabs <- crabs(Species = "Dungeness Crab", 
+               SST = SST_aveC, Depth = Bathymetry_resampled, 
                maxT = 19, minT = 3, 
                maxDepth = 0, minDepth = -360,
                EEZ = wc_region, SST_extent = SST_extent)
+```
 
+```{r}
 tmap_arrange(oysters$oysterMap, crabs$crabMap, ncol = 2)
 ```
 
-Figure 1 Suitable locations for oysters (left) and Dungeness Crab
+Figure1 Suitable locations and total suitable area in each EEZ for oysters (left) and Dungeness Crab (right)
 
-```{r}
-oysters$oysterArea_Table
-crabs$crabArea_Table
-```
+According to Figure 1, we can see that both oysters and Dungeness Crab have wide distribution across the west coast of the US. Dungeness Crabs are particularly concentrated in the southern part, but oysters prefer the northern part. The statistic of suitable areas within each Exclusive Economic Zone shows similar patterns, where Oregon and Washington are more suitable for oyster aquaculture, while Central and Southern California are more suitable for Dungeness Crab aquaculture.
 
-According to Figure 1, we can see that both oysters and Dungeness Crab have wide distribution across the west coast of the US. Particularly, oysters are more concentrated in the southern part, but Dungeness Crab prefers the northern part. The statistic of suitable areas within each Exclusive Economic Zone shows similar patterns, where Oregon and Washington are more suitable for Dungeness Crab aquaculture, while Central and Southern California are more suitable for oysters aquaculture (Table 1 and Table 2).
-
-### Citation
+### Citations
 
 | Reference | Citation | Link |
 |------------------------|------------------------|------------------------|
