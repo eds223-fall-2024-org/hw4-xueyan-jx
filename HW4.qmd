@@ -41,7 +41,6 @@ library(viridisLite)
 #### 2. Prepare data
 
 ```{r}
-#| code-fold: true
 # Load data
 
 ## West Coast EEZ
@@ -133,20 +132,6 @@ oysters <- function(Species, SST, Depth, maxT, minT,
   SST_stars <- st_as_stars(SST_suit, dimensions = st_dimensions(SST))
   Depth_stars <- st_as_stars(Depth_suit, 
                              dimensions = st_dimensions(Depth))
-  # Try to stack
-  stack_raster <- tryCatch({
-    c(SST_stars, Depth_stars)  # Try stacking the rasters
-  }, error = function(e) {
-    NULL  # If stacking fails, return NULL
-  })
-  
-  # Check if successfully stack
-  if (!is.null(stack_raster)) {
-    print("all match!")
-  } else {
-    print("not match")
-  }
-    
   
   # Find suitable locations
   oyster_suit <- SST_stars * Depth_stars
@@ -233,9 +218,7 @@ oysters <- function(Species, SST, Depth, maxT, minT,
                                tm_layout(legend.text.size = 0.7,
                                          legend.title.size = 1,
                                          legend.title.fontface = "bold",
-                                         legend.outside = TRUE,
-                                         panel.labels = "(B)",
-                                         panel.label.bg.color = "white") +
+                                         legend.outside = TRUE) +
                                tm_scale_bar(position = c(0.05, 0.1),
                                             breaks = c(0, 100, 200, 300, 400)) +
                                tm_compass(position = c(0.05, 0.8),
@@ -263,19 +246,6 @@ crabs <- function(Species, SST, Depth, maxT, minT,
   SST_stars <- st_as_stars(SST_suit, dimensions = st_dimensions(SST))
   Depth_stars <- st_as_stars(Depth_suit, 
                              dimensions = st_dimensions(Depth))
-  ## Try to stack
-  stack_raster <- tryCatch({
-    c(SST_stars, Depth_stars)  # Try stacking the rasters
-  }, error = function(e) {
-    NULL  # If stacking fails, return NULL
-  })
-  
-  ## Check if successfully stack 
-  if (!is.null(stack_raster)) {
-    print("all match!")
-  } else {
-    print("not match")
-  }
     
   # Find suitable locations
   crab_suit <- SST_stars * Depth_stars
@@ -389,7 +359,7 @@ crabs <- crabs(Species = "Dungeness Crab",
 ```
 
 ```{r}
-tmap_arrange(oysters$oysterMap, crabs$crabMap, ncol = 2)
+tmap_arrange(oysters, crabs, ncol = 2)
 ```
 
 Figure1 Suitable locations and total suitable area in each EEZ for oysters (left) and Dungeness Crab (right)
