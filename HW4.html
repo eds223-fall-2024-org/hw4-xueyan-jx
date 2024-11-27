@@ -83,9 +83,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <ul>
   <li><a href="#objective" id="toc-objective" class="nav-link active" data-scroll-target="#objective">Objective</a></li>
   <li><a href="#library-and-data-preparation" id="toc-library-and-data-preparation" class="nav-link" data-scroll-target="#library-and-data-preparation">Library and data preparation</a></li>
-  <li><a href="#form-workflow-for-the-two-species" id="toc-form-workflow-for-the-two-species" class="nav-link" data-scroll-target="#form-workflow-for-the-two-species">Form workflow for the two species</a></li>
-  <li><a href="#generate-suitable-area-for-oysters-and-dungeness-crab" id="toc-generate-suitable-area-for-oysters-and-dungeness-crab" class="nav-link" data-scroll-target="#generate-suitable-area-for-oysters-and-dungeness-crab">Generate suitable area for oysters and Dungeness Crab</a></li>
-  <li><a href="#citation" id="toc-citation" class="nav-link" data-scroll-target="#citation">Citation</a></li>
+  <li><a href="#set-workflow-for-the-species" id="toc-set-workflow-for-the-species" class="nav-link" data-scroll-target="#set-workflow-for-the-species">Set workflow for the species</a></li>
+  <li><a href="#generate-suitable-locations-and-areas-for-oysters-and-dungeness-crab" id="toc-generate-suitable-locations-and-areas-for-oysters-and-dungeness-crab" class="nav-link" data-scroll-target="#generate-suitable-locations-and-areas-for-oysters-and-dungeness-crab">Generate suitable locations and areas for oysters and Dungeness Crab</a></li>
+  <li><a href="#citations" id="toc-citations" class="nav-link" data-scroll-target="#citations">Citations</a></li>
   </ul>
 </nav>
 </div>
@@ -140,17 +140,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(units)          <span class="co"># for droping units of the data (Bathymetry)</span></span>
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tmap)</span>
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tmaptools)      <span class="co"># for reading OpenStreetMap data</span></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(knitr)          <span class="co"># for generating table</span></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(testthat)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(viridisLite)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="prepare-data" class="level4">
 <h4 class="anchored" data-anchor-id="prepare-data">2. Prepare data</h4>
 <div class="cell">
-<details class="code-fold">
-<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load data</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="do">## West Coast EEZ</span></span>
@@ -158,29 +154,29 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="do">## Bathymetry</span></span>
 <span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>Bathymetry <span class="ot">&lt;-</span> stars<span class="sc">::</span><span class="fu">read_stars</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"data"</span>, <span class="st">"depth.tif"</span>), <span class="at">quiet =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>                                </span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="do">## Sea Surface Temperature</span></span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="do">### Read the path of all temperature files</span></span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>files <span class="ot">&lt;-</span> <span class="fu">list.files</span>(</span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">here</span>(<span class="st">"data"</span>), <span class="at">pattern =</span> <span class="st">"average*"</span>, </span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">full.names =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>SST <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">file_name =</span> files)</span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="do">### Combine all temperature file into a raster stack and calculate average</span></span>
-<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>SST_stack <span class="ot">&lt;-</span> SST<span class="sc">$</span>file_name <span class="sc">%&gt;%</span></span>
-<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">lapply</span>(read_stars) <span class="sc">%&gt;%</span>      <span class="co"># Generate a list with stars files</span></span>
-<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">do.call</span>(c, .)               <span class="co"># Generate the raster stack</span></span>
-<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a><span class="do">### Calculate average temperature and save as a raster </span></span>
-<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>SST_ave <span class="ot">&lt;-</span> <span class="fu">st_apply</span>(SST_stack, <span class="at">MARGIN =</span> <span class="fu">c</span>(<span class="st">"x"</span>, <span class="st">"y"</span>), </span>
-<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>                    <span class="at">FUN =</span> mean, <span class="at">na.rm =</span> <span class="cn">TRUE</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>           <span class="fu">write_stars</span>(<span class="st">"SST_mean.tif"</span>)</span>
-<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a><span class="do">### Convert average SST from Kelvin to Celsius</span></span>
-<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>SST_aveC <span class="ot">&lt;-</span> SST_ave <span class="sc">-</span> <span class="fl">273.15</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="do">### Drop the units (m) of Bathymetry data</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>Bathymetry <span class="ot">&lt;-</span> <span class="fu">drop_units</span>(Bathymetry)</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="do">## Sea Surface Temperature</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="do">### Read the path of all temperature files</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>files <span class="ot">&lt;-</span> <span class="fu">list.files</span>(</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">here</span>(<span class="st">"data"</span>), <span class="at">pattern =</span> <span class="st">"average*"</span>, </span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">full.names =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>SST <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">file_name =</span> files)</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a><span class="do">### Combine all temperature file into a raster stack and calculate average</span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>SST_stack <span class="ot">&lt;-</span> SST<span class="sc">$</span>file_name <span class="sc">%&gt;%</span></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">lapply</span>(read_stars) <span class="sc">%&gt;%</span>      <span class="co"># Generate a list with stars files</span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">do.call</span>(c, .)               <span class="co"># Generate the raster stack</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a><span class="do">### Calculate average temperature and save as a raster </span></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>SST_ave <span class="ot">&lt;-</span> <span class="fu">st_apply</span>(SST_stack, <span class="at">MARGIN =</span> <span class="fu">c</span>(<span class="st">"x"</span>, <span class="st">"y"</span>), </span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>                    <span class="at">FUN =</span> mean, <span class="at">na.rm =</span> <span class="cn">TRUE</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>           <span class="fu">write_stars</span>(<span class="st">"SST_mean.tif"</span>)</span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a><span class="do">### Convert average SST from Kelvin to Celsius</span></span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>SST_aveC <span class="ot">&lt;-</span> SST_ave <span class="sc">-</span> <span class="fl">273.15</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Check if coordinate reference systems (CRS) of all data match</span></span>
@@ -225,329 +221,271 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </section>
 </section>
-<section id="form-workflow-for-the-two-species" class="level3">
-<h3 class="anchored" data-anchor-id="form-workflow-for-the-two-species">Form workflow for the two species</h3>
-<section id="select-suitable-environmental-conditions-for-oysters" class="level4">
-<h4 class="anchored" data-anchor-id="select-suitable-environmental-conditions-for-oysters">1. Select suitable environmental conditions for oysters</h4>
+<section id="set-workflow-for-the-species" class="level3">
+<h3 class="anchored" data-anchor-id="set-workflow-for-the-species">Set workflow for the species</h3>
+<section id="select-suitable-locations-for-oysters-and-calculate-total-suitable-area-in-each-eez" class="level4">
+<h4 class="anchored" data-anchor-id="select-suitable-locations-for-oysters-and-calculate-total-suitable-area-in-each-eez">1. Select suitable locations for oysters and calculate total suitable area in each EEZ</h4>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Set workflow for selecting suitable environment conditions for oysters</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>oysters <span class="ot">&lt;-</span> <span class="cf">function</span>(Species, SST, Depth, EEZ, SST_extent){</span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Drop the units (m) of Bathymetry data</span></span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  Depth <span class="ot">&lt;-</span> <span class="fu">drop_units</span>(Depth)</span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Set suitable condition to 1 and unsuitable condition to 0</span></span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>  <span class="co"># This process will generates a "matrix"/"array" objective</span></span>
-<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>  SST_suit <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(SST[[<span class="dv">1</span>]] <span class="sc">&gt;=</span> <span class="dv">11</span> <span class="sc">&amp;</span> SST[[<span class="dv">1</span>]] <span class="sc">&lt;=</span> <span class="dv">30</span>, <span class="dv">1</span>, <span class="dv">0</span>)</span>
-<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>  Depth_suit <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(Depth[[<span class="dv">1</span>]] <span class="sc">&gt;=</span> <span class="sc">-</span><span class="dv">70</span> <span class="sc">&amp;</span> Depth[[<span class="dv">1</span>]] <span class="sc">&lt;=</span> <span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">0</span>) </span>
-<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Transform the "matrix"/"array" objective to "stars" format</span></span>
-<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>  SST_stars <span class="ot">&lt;-</span> <span class="fu">st_as_stars</span>(SST_suit, <span class="at">dimensions =</span> <span class="fu">st_dimensions</span>(SST))</span>
-<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>  Depth_stars <span class="ot">&lt;-</span> <span class="fu">st_as_stars</span>(Depth_suit, </span>
-<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>                             <span class="at">dimensions =</span> <span class="fu">st_dimensions</span>(Depth))</span>
-<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Try to stack</span></span>
-<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>  stack_raster <span class="ot">&lt;-</span> <span class="fu">tryCatch</span>({</span>
-<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>    <span class="fu">c</span>(SST_stars, Depth_stars)  <span class="co"># Try stacking the rasters</span></span>
-<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>  }, <span class="at">error =</span> <span class="cf">function</span>(e) {</span>
-<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>    <span class="cn">NULL</span>  <span class="co"># If stacking fails, return NULL</span></span>
-<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>  })</span>
-<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Check if successfully stack </span></span>
-<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(stack_raster)) {</span>
-<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>    <span class="fu">print</span>(<span class="st">"all match!"</span>)</span>
-<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
-<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a>    <span class="fu">print</span>(<span class="st">"not match"</span>)</span>
-<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb8-30"><a href="#cb8-30" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Find suitable locations</span></span>
-<span id="cb8-31"><a href="#cb8-31" aria-hidden="true" tabindex="-1"></a>  oyster_suit <span class="ot">&lt;-</span> SST_stars <span class="sc">*</span> Depth_stars</span>
-<span id="cb8-32"><a href="#cb8-32" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb8-33"><a href="#cb8-33" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Set unsuitable area as NA</span></span>
-<span id="cb8-34"><a href="#cb8-34" aria-hidden="true" tabindex="-1"></a>  oyster_suit[oyster_suit <span class="sc">==</span> <span class="dv">0</span>] <span class="ot">&lt;-</span> <span class="cn">NA</span></span>
-<span id="cb8-35"><a href="#cb8-35" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb8-36"><a href="#cb8-36" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb8-37"><a href="#cb8-37" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Transform data format from stars/sf to terra</span></span>
-<span id="cb8-38"><a href="#cb8-38" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Keep same projection (EPSG:5070, Projection method: Albers Equal Area, unit:m)</span></span>
-<span id="cb8-39"><a href="#cb8-39" aria-hidden="true" tabindex="-1"></a>  oyster_suit_terra <span class="ot">&lt;-</span> terra<span class="sc">::</span><span class="fu">rast</span>(oyster_suit) <span class="sc">%&gt;%</span></span>
-<span id="cb8-40"><a href="#cb8-40" aria-hidden="true" tabindex="-1"></a>                       terra<span class="sc">::</span><span class="fu">project</span>(<span class="st">"EPSG:5070"</span>)</span>
-<span id="cb8-41"><a href="#cb8-41" aria-hidden="true" tabindex="-1"></a>  wc_region_terra <span class="ot">&lt;-</span> terra<span class="sc">::</span><span class="fu">vect</span>(EEZ) <span class="sc">%&gt;%</span></span>
-<span id="cb8-42"><a href="#cb8-42" aria-hidden="true" tabindex="-1"></a>                     terra<span class="sc">::</span><span class="fu">project</span>(<span class="st">"EPSG:5070"</span>)</span>
-<span id="cb8-43"><a href="#cb8-43" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb8-44"><a href="#cb8-44" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Find suitable locations within the extent of Exclusive Economic Zones</span></span>
-<span id="cb8-45"><a href="#cb8-45" aria-hidden="true" tabindex="-1"></a>  oyster_suit_EEZ <span class="ot">&lt;-</span> terra<span class="sc">::</span><span class="fu">mask</span>(oyster_suit_terra, wc_region_terra)</span>
-<span id="cb8-46"><a href="#cb8-46" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb8-47"><a href="#cb8-47" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Rasterize Exclusive Economic Zones data</span></span>
-<span id="cb8-48"><a href="#cb8-48" aria-hidden="true" tabindex="-1"></a>  EEZ_rasterized <span class="ot">&lt;-</span> terra<span class="sc">::</span><span class="fu">rasterize</span>(wc_region_terra,</span>
-<span id="cb8-49"><a href="#cb8-49" aria-hidden="true" tabindex="-1"></a>                                     oyster_suit_terra,</span>
-<span id="cb8-50"><a href="#cb8-50" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">field =</span> <span class="st">"rgn_id"</span>) </span>
-<span id="cb8-51"><a href="#cb8-51" aria-hidden="true" tabindex="-1"></a>  EEZ_mask <span class="ot">&lt;-</span> <span class="fu">mask</span>(EEZ_rasterized, oyster_suit_EEZ)</span>
-<span id="cb8-52"><a href="#cb8-52" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb8-53"><a href="#cb8-53" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Calculate suitable area for EEZs</span></span>
-<span id="cb8-54"><a href="#cb8-54" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Generate a raster with area information</span></span>
-<span id="cb8-55"><a href="#cb8-55" aria-hidden="true" tabindex="-1"></a>  cell_size <span class="ot">&lt;-</span> terra<span class="sc">::</span><span class="fu">cellSize</span>(oyster_suit_EEZ)</span>
-<span id="cb8-56"><a href="#cb8-56" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Mask EEZ on the area raster</span></span>
-<span id="cb8-57"><a href="#cb8-57" aria-hidden="true" tabindex="-1"></a>  cell_area_masked <span class="ot">&lt;-</span> <span class="fu">mask</span>(cell_size, EEZ_mask)</span>
-<span id="cb8-58"><a href="#cb8-58" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb8-59"><a href="#cb8-59" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Calculate suitable area for each EEZ</span></span>
-<span id="cb8-60"><a href="#cb8-60" aria-hidden="true" tabindex="-1"></a>  suitable_area <span class="ot">&lt;-</span> terra<span class="sc">::</span><span class="fu">zonal</span>(cell_area_masked, EEZ_rasterized, </span>
-<span id="cb8-61"><a href="#cb8-61" aria-hidden="true" tabindex="-1"></a>                                <span class="at">fun =</span> <span class="st">"sum"</span>, </span>
-<span id="cb8-62"><a href="#cb8-62" aria-hidden="true" tabindex="-1"></a>                                <span class="at">na.rm =</span> <span class="cn">TRUE</span>) </span>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>oysters <span class="ot">&lt;-</span> <span class="cf">function</span>(Species, SST, Depth, maxT, minT, </span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>                    maxDepth, minDepth, EEZ, SST_extent){</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Set suitable condition to 1 and unsuitable condition to 0</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  <span class="co"># This process will generates a "matrix"/"array" objective</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  SST_suit <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(SST[[<span class="dv">1</span>]] <span class="sc">&gt;=</span> minT <span class="sc">&amp;</span> SST[[<span class="dv">1</span>]] <span class="sc">&lt;=</span> maxT, <span class="dv">1</span>, <span class="dv">0</span>)</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  Depth_suit <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(Depth[[<span class="dv">1</span>]] <span class="sc">&gt;=</span> minDepth <span class="sc">&amp;</span> Depth[[<span class="dv">1</span>]] <span class="sc">&lt;=</span> maxDepth, <span class="dv">1</span>, <span class="dv">0</span>) </span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Transform the "matrix"/"array" objective to "stars" format</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>  SST_stars <span class="ot">&lt;-</span> <span class="fu">st_as_stars</span>(SST_suit, <span class="at">dimensions =</span> <span class="fu">st_dimensions</span>(SST))</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>  Depth_stars <span class="ot">&lt;-</span> <span class="fu">st_as_stars</span>(Depth_suit, </span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>                             <span class="at">dimensions =</span> <span class="fu">st_dimensions</span>(Depth))</span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Find suitable locations</span></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>  oyster_suit <span class="ot">&lt;-</span> SST_stars <span class="sc">*</span> Depth_stars</span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Set unsuitable area as NA</span></span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>  oyster_suit[oyster_suit <span class="sc">==</span> <span class="dv">0</span>] <span class="ot">&lt;-</span> <span class="cn">NA</span></span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Transform data format from stars/sf to terra</span></span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Keep same projection (EPSG:5070, Projection method: Albers Equal Area, unit:m)</span></span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>  oyster_suit_terra <span class="ot">&lt;-</span> terra<span class="sc">::</span><span class="fu">rast</span>(oyster_suit) <span class="sc">%&gt;%</span></span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>                       terra<span class="sc">::</span><span class="fu">project</span>(<span class="st">"EPSG:5070"</span>)</span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>  wc_region_terra <span class="ot">&lt;-</span> terra<span class="sc">::</span><span class="fu">vect</span>(EEZ) <span class="sc">%&gt;%</span></span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>                     terra<span class="sc">::</span><span class="fu">project</span>(<span class="st">"EPSG:5070"</span>)</span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Find suitable locations within the extent of Exclusive Economic Zones</span></span>
+<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a>  oyster_suit_EEZ <span class="ot">&lt;-</span> terra<span class="sc">::</span><span class="fu">mask</span>(oyster_suit_terra, wc_region_terra)</span>
+<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Rasterize Exclusive Economic Zones data</span></span>
+<span id="cb8-30"><a href="#cb8-30" aria-hidden="true" tabindex="-1"></a>  EEZ_rasterized <span class="ot">&lt;-</span> terra<span class="sc">::</span><span class="fu">rasterize</span>(wc_region_terra,</span>
+<span id="cb8-31"><a href="#cb8-31" aria-hidden="true" tabindex="-1"></a>                                     oyster_suit_terra,</span>
+<span id="cb8-32"><a href="#cb8-32" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">field =</span> <span class="st">"rgn_id"</span>) </span>
+<span id="cb8-33"><a href="#cb8-33" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb8-34"><a href="#cb8-34" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Calculate suitable area for EEZs and join this to original EEZ (sf file)</span></span>
+<span id="cb8-35"><a href="#cb8-35" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Generate a raster with area information (for all cells)</span></span>
+<span id="cb8-36"><a href="#cb8-36" aria-hidden="true" tabindex="-1"></a>  cell_size <span class="ot">&lt;-</span> terra<span class="sc">::</span><span class="fu">cellSize</span>(oyster_suit_EEZ)</span>
+<span id="cb8-37"><a href="#cb8-37" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Mask suitable locations on the area raster</span></span>
+<span id="cb8-38"><a href="#cb8-38" aria-hidden="true" tabindex="-1"></a>  cell_area_masked <span class="ot">&lt;-</span> <span class="fu">mask</span>(cell_size, oyster_suit_EEZ)</span>
+<span id="cb8-39"><a href="#cb8-39" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Calculate suitable area for each EEZ</span></span>
+<span id="cb8-40"><a href="#cb8-40" aria-hidden="true" tabindex="-1"></a>  suitable_area <span class="ot">&lt;-</span> terra<span class="sc">::</span><span class="fu">zonal</span>(cell_area_masked, EEZ_rasterized, </span>
+<span id="cb8-41"><a href="#cb8-41" aria-hidden="true" tabindex="-1"></a>                                <span class="at">fun =</span> <span class="st">"sum"</span>, </span>
+<span id="cb8-42"><a href="#cb8-42" aria-hidden="true" tabindex="-1"></a>                                <span class="at">na.rm =</span> <span class="cn">TRUE</span>) </span>
+<span id="cb8-43"><a href="#cb8-43" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Transform the unit of the data and add the name of EEZ</span></span>
+<span id="cb8-44"><a href="#cb8-44" aria-hidden="true" tabindex="-1"></a>  suitable_area<span class="sc">$</span>suitable_area_km2 <span class="ot">&lt;-</span> suitable_area<span class="sc">$</span>area <span class="sc">/</span> <span class="fl">1e6</span></span>
+<span id="cb8-45"><a href="#cb8-45" aria-hidden="true" tabindex="-1"></a>  suitable_area<span class="sc">$</span>EEZ_name <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"Oregon"</span>, <span class="st">"Northern California"</span>,</span>
+<span id="cb8-46"><a href="#cb8-46" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"Central California"</span>, <span class="st">"Southern California"</span>,</span>
+<span id="cb8-47"><a href="#cb8-47" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"Washington"</span>)</span>
+<span id="cb8-48"><a href="#cb8-48" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb8-49"><a href="#cb8-49" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Only keep useful information</span></span>
+<span id="cb8-50"><a href="#cb8-50" aria-hidden="true" tabindex="-1"></a>  suitable_area <span class="ot">&lt;-</span> suitable_area[, <span class="fu">c</span>(<span class="st">"EEZ_name"</span>, <span class="st">"suitable_area_km2"</span>)]</span>
+<span id="cb8-51"><a href="#cb8-51" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb8-52"><a href="#cb8-52" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Join total suitable area information to original EEZ (sf file)</span></span>
+<span id="cb8-53"><a href="#cb8-53" aria-hidden="true" tabindex="-1"></a>  EEZ_suitable_area <span class="ot">&lt;-</span> <span class="fu">left_join</span>(wc_region, suitable_area,</span>
+<span id="cb8-54"><a href="#cb8-54" aria-hidden="true" tabindex="-1"></a>                                <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"rgn"</span> <span class="ot">=</span> <span class="st">"EEZ_name"</span>))</span>
+<span id="cb8-55"><a href="#cb8-55" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb8-56"><a href="#cb8-56" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb8-57"><a href="#cb8-57" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Map the suitable locations for oyster and EEZ with total suitable area</span></span>
+<span id="cb8-58"><a href="#cb8-58" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Get unique area values for each EEZ and sort them</span></span>
+<span id="cb8-59"><a href="#cb8-59" aria-hidden="true" tabindex="-1"></a>  unique_values <span class="ot">&lt;-</span> <span class="fu">sort</span>(<span class="fu">unique</span>(EEZ_suitable_area<span class="sc">$</span>suitable_area_km2)) </span>
+<span id="cb8-60"><a href="#cb8-60" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb8-61"><a href="#cb8-61" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Generate breaks</span></span>
+<span id="cb8-62"><a href="#cb8-62" aria-hidden="true" tabindex="-1"></a>  breaks <span class="ot">&lt;-</span> <span class="fu">c</span>(unique_values, <span class="fu">max</span>(unique_values) <span class="sc">+</span> <span class="dv">1</span>)</span>
 <span id="cb8-63"><a href="#cb8-63" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb8-64"><a href="#cb8-64" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Transform the unit of the data and add the name of EEZ</span></span>
-<span id="cb8-65"><a href="#cb8-65" aria-hidden="true" tabindex="-1"></a>  suitable_area<span class="sc">$</span>area_km2 <span class="ot">&lt;-</span> suitable_area<span class="sc">$</span>area <span class="sc">/</span> <span class="fl">1e6</span></span>
-<span id="cb8-66"><a href="#cb8-66" aria-hidden="true" tabindex="-1"></a>  suitable_area<span class="sc">$</span>EEZ_name <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"Oregon"</span>, <span class="st">"Northern California"</span>,</span>
-<span id="cb8-67"><a href="#cb8-67" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"Central California"</span>, <span class="st">"Southern California"</span>,</span>
-<span id="cb8-68"><a href="#cb8-68" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"Washington"</span>)</span>
+<span id="cb8-64"><a href="#cb8-64" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Generate palette</span></span>
+<span id="cb8-65"><a href="#cb8-65" aria-hidden="true" tabindex="-1"></a>  palette <span class="ot">&lt;-</span> viridisLite<span class="sc">::</span><span class="fu">viridis</span>(<span class="fu">length</span>(unique_values))</span>
+<span id="cb8-66"><a href="#cb8-66" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb8-67"><a href="#cb8-67" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Download base map from OSM of the bounding box</span></span>
+<span id="cb8-68"><a href="#cb8-68" aria-hidden="true" tabindex="-1"></a>  background_data <span class="ot">&lt;-</span> tmaptools<span class="sc">::</span><span class="fu">read_osm</span>(sf<span class="sc">::</span><span class="fu">st_bbox</span>(SST_extent))</span>
 <span id="cb8-69"><a href="#cb8-69" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb8-70"><a href="#cb8-70" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Generate a summary table</span></span>
-<span id="cb8-71"><a href="#cb8-71" aria-hidden="true" tabindex="-1"></a>  suitable_area <span class="ot">&lt;-</span> suitable_area[, <span class="fu">c</span>(<span class="st">"EEZ_name"</span>, <span class="st">"area_km2"</span>)]</span>
-<span id="cb8-72"><a href="#cb8-72" aria-hidden="true" tabindex="-1"></a>  suitable_area_tab <span class="ot">&lt;-</span> <span class="fu">kable</span>(</span>
-<span id="cb8-73"><a href="#cb8-73" aria-hidden="true" tabindex="-1"></a>    suitable_area, </span>
-<span id="cb8-74"><a href="#cb8-74" aria-hidden="true" tabindex="-1"></a>    <span class="at">caption =</span> <span class="st">"Table 1 Suitable Area of Oyster in Each Exclusive Economic Zones (km²)"</span>,</span>
-<span id="cb8-75"><a href="#cb8-75" aria-hidden="true" tabindex="-1"></a>    <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">"Name"</span>, <span class="st">"Area (km²)"</span>)) </span>
-<span id="cb8-76"><a href="#cb8-76" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb8-77"><a href="#cb8-77" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb8-78"><a href="#cb8-78" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Map the suitable locations for oyster</span></span>
-<span id="cb8-79"><a href="#cb8-79" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Download base map from OSM of the bounding box</span></span>
-<span id="cb8-80"><a href="#cb8-80" aria-hidden="true" tabindex="-1"></a>  background_data <span class="ot">&lt;-</span> tmaptools<span class="sc">::</span><span class="fu">read_osm</span>(sf<span class="sc">::</span><span class="fu">st_bbox</span>(SST_extent))</span>
-<span id="cb8-81"><a href="#cb8-81" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb8-82"><a href="#cb8-82" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Keep raster data the same CRS to OSM</span></span>
-<span id="cb8-83"><a href="#cb8-83" aria-hidden="true" tabindex="-1"></a>  oyster_suit_sameCRS <span class="ot">&lt;-</span> <span class="fu">st_transform</span>(oyster_suit, </span>
-<span id="cb8-84"><a href="#cb8-84" aria-hidden="true" tabindex="-1"></a>                                         <span class="at">crs =</span> <span class="fu">st_crs</span>(background_data))</span>
-<span id="cb8-85"><a href="#cb8-85" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb8-86"><a href="#cb8-86" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Map</span></span>
-<span id="cb8-87"><a href="#cb8-87" aria-hidden="true" tabindex="-1"></a>  oyster_map <span class="ot">&lt;-</span> <span class="fu">tm_shape</span>(background_data) <span class="sc">+</span> </span>
-<span id="cb8-88"><a href="#cb8-88" aria-hidden="true" tabindex="-1"></a>                  <span class="fu">tm_rgb</span>() <span class="sc">+</span></span>
-<span id="cb8-89"><a href="#cb8-89" aria-hidden="true" tabindex="-1"></a>                  <span class="fu">tm_shape</span>(oyster_suit_sameCRS) <span class="sc">+</span></span>
-<span id="cb8-90"><a href="#cb8-90" aria-hidden="true" tabindex="-1"></a>                  <span class="fu">tm_raster</span>(<span class="at">palette =</span> <span class="st">"red"</span>,</span>
-<span id="cb8-91"><a href="#cb8-91" aria-hidden="true" tabindex="-1"></a>                            <span class="at">title =</span> <span class="st">""</span>,</span>
-<span id="cb8-92"><a href="#cb8-92" aria-hidden="true" tabindex="-1"></a>                            <span class="at">labels =</span> <span class="fu">paste</span>(<span class="st">"Suitable locations for"</span>, Species)) <span class="sc">+</span></span>
-<span id="cb8-93"><a href="#cb8-93" aria-hidden="true" tabindex="-1"></a>                  <span class="fu">tm_credits</span>(<span class="st">"© OpenStreetMap contributors"</span>,</span>
-<span id="cb8-94"><a href="#cb8-94" aria-hidden="true" tabindex="-1"></a>                             <span class="at">position=</span><span class="fu">c</span>(<span class="st">"left"</span>, <span class="st">"bottom"</span>)) <span class="sc">+</span></span>
-<span id="cb8-95"><a href="#cb8-95" aria-hidden="true" tabindex="-1"></a>                  <span class="fu">tm_layout</span>(<span class="at">legend.text.size =</span> <span class="fl">0.9</span>,</span>
-<span id="cb8-96"><a href="#cb8-96" aria-hidden="true" tabindex="-1"></a>                            <span class="at">legend.text.fontface =</span> <span class="st">"bold"</span>,</span>
-<span id="cb8-97"><a href="#cb8-97" aria-hidden="true" tabindex="-1"></a>                            <span class="at">legend.position =</span> <span class="fu">c</span>(<span class="fl">0.05</span>, <span class="fl">0.2</span>)) <span class="sc">+</span></span>
-<span id="cb8-98"><a href="#cb8-98" aria-hidden="true" tabindex="-1"></a>                <span class="fu">tm_scale_bar</span>(<span class="at">position =</span> <span class="fu">c</span>(<span class="fl">0.05</span>, <span class="fl">0.1</span>),</span>
-<span id="cb8-99"><a href="#cb8-99" aria-hidden="true" tabindex="-1"></a>                             <span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">100</span>, <span class="dv">200</span>, <span class="dv">300</span>)) <span class="sc">+</span></span>
-<span id="cb8-100"><a href="#cb8-100" aria-hidden="true" tabindex="-1"></a>                <span class="fu">tm_compass</span>(<span class="at">position =</span> <span class="fu">c</span>(<span class="fl">0.05</span>, <span class="fl">0.8</span>),</span>
-<span id="cb8-101"><a href="#cb8-101" aria-hidden="true" tabindex="-1"></a>                           <span class="at">size =</span> <span class="fl">1.3</span>)</span>
-<span id="cb8-102"><a href="#cb8-102" aria-hidden="true" tabindex="-1"></a>  map_table <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">oysterMap =</span> oyster_map, <span class="at">oysterArea_Table =</span> suitable_area_tab)</span>
-<span id="cb8-103"><a href="#cb8-103" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(map_table)</span>
-<span id="cb8-104"><a href="#cb8-104" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb8-70"><a href="#cb8-70" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Keep data the same CRS to OSM</span></span>
+<span id="cb8-71"><a href="#cb8-71" aria-hidden="true" tabindex="-1"></a>  oyster_suit_sameCRS <span class="ot">&lt;-</span> <span class="fu">st_transform</span>(oyster_suit, </span>
+<span id="cb8-72"><a href="#cb8-72" aria-hidden="true" tabindex="-1"></a>                                         <span class="at">crs =</span> <span class="fu">st_crs</span>(background_data))</span>
+<span id="cb8-73"><a href="#cb8-73" aria-hidden="true" tabindex="-1"></a>  EEZ_suitable_area_sameCRS <span class="ot">&lt;-</span> <span class="fu">st_transform</span>(EEZ_suitable_area, </span>
+<span id="cb8-74"><a href="#cb8-74" aria-hidden="true" tabindex="-1"></a>                                         <span class="at">crs =</span> <span class="fu">st_crs</span>(background_data))</span>
+<span id="cb8-75"><a href="#cb8-75" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb8-76"><a href="#cb8-76" aria-hidden="true" tabindex="-1"></a>  oyster_EEZ_suitable_map <span class="ot">&lt;-</span> <span class="fu">tm_shape</span>(background_data) <span class="sc">+</span> </span>
+<span id="cb8-77"><a href="#cb8-77" aria-hidden="true" tabindex="-1"></a>                               <span class="fu">tm_rgb</span>() <span class="sc">+</span></span>
+<span id="cb8-78"><a href="#cb8-78" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb8-79"><a href="#cb8-79" aria-hidden="true" tabindex="-1"></a>                               <span class="fu">tm_shape</span>(EEZ_suitable_area_sameCRS) <span class="sc">+</span></span>
+<span id="cb8-80"><a href="#cb8-80" aria-hidden="true" tabindex="-1"></a>                               <span class="fu">tm_polygons</span>(</span>
+<span id="cb8-81"><a href="#cb8-81" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">col =</span> <span class="st">"suitable_area_km2"</span>,</span>
+<span id="cb8-82"><a href="#cb8-82" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">breaks =</span> breaks,</span>
+<span id="cb8-83"><a href="#cb8-83" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">labels =</span> <span class="fu">as.character</span>(<span class="fu">ceiling</span>(unique_values)),</span>
+<span id="cb8-84"><a href="#cb8-84" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">palette =</span> palette,</span>
+<span id="cb8-85"><a href="#cb8-85" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">alpha =</span> <span class="fl">0.65</span>,</span>
+<span id="cb8-86"><a href="#cb8-86" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">title =</span> <span class="st">"Total suitable area(km²)"</span>) <span class="sc">+</span></span>
+<span id="cb8-87"><a href="#cb8-87" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb8-88"><a href="#cb8-88" aria-hidden="true" tabindex="-1"></a>                               <span class="fu">tm_shape</span>(oyster_suit_sameCRS) <span class="sc">+</span></span>
+<span id="cb8-89"><a href="#cb8-89" aria-hidden="true" tabindex="-1"></a>                               <span class="fu">tm_raster</span>(<span class="at">palette =</span> <span class="st">"red"</span>,</span>
+<span id="cb8-90"><a href="#cb8-90" aria-hidden="true" tabindex="-1"></a>                                  <span class="at">title =</span> <span class="st">""</span>,</span>
+<span id="cb8-91"><a href="#cb8-91" aria-hidden="true" tabindex="-1"></a>                                  <span class="at">labels =</span> <span class="fu">paste</span>(Species, <span class="st">"</span><span class="sc">\n</span><span class="st">suitable locations"</span>)) <span class="sc">+</span></span>
+<span id="cb8-92"><a href="#cb8-92" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb8-93"><a href="#cb8-93" aria-hidden="true" tabindex="-1"></a>                               <span class="fu">tm_shape</span>(EEZ_suitable_area) <span class="sc">+</span></span>
+<span id="cb8-94"><a href="#cb8-94" aria-hidden="true" tabindex="-1"></a>                                 <span class="fu">tm_text</span>(<span class="st">"rgn"</span>, <span class="at">size =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb8-95"><a href="#cb8-95" aria-hidden="true" tabindex="-1"></a>                               </span>
+<span id="cb8-96"><a href="#cb8-96" aria-hidden="true" tabindex="-1"></a>                               <span class="fu">tm_credits</span>(<span class="st">"© OpenStreetMap contributors"</span>,</span>
+<span id="cb8-97"><a href="#cb8-97" aria-hidden="true" tabindex="-1"></a>                                           <span class="at">position=</span><span class="fu">c</span>(<span class="st">"left"</span>, <span class="st">"bottom"</span>)) <span class="sc">+</span></span>
+<span id="cb8-98"><a href="#cb8-98" aria-hidden="true" tabindex="-1"></a>                               <span class="fu">tm_layout</span>(<span class="at">legend.text.size =</span> <span class="fl">0.6</span>,</span>
+<span id="cb8-99"><a href="#cb8-99" aria-hidden="true" tabindex="-1"></a>                                         <span class="at">legend.title.size =</span> <span class="dv">1</span>,</span>
+<span id="cb8-100"><a href="#cb8-100" aria-hidden="true" tabindex="-1"></a>                                         <span class="at">legend.title.fontface =</span> <span class="st">"bold"</span>,</span>
+<span id="cb8-101"><a href="#cb8-101" aria-hidden="true" tabindex="-1"></a>                                         <span class="at">legend.outside =</span> <span class="cn">TRUE</span>) <span class="sc">+</span></span>
+<span id="cb8-102"><a href="#cb8-102" aria-hidden="true" tabindex="-1"></a>                               <span class="fu">tm_scale_bar</span>(<span class="at">position =</span> <span class="fu">c</span>(<span class="fl">0.05</span>, <span class="fl">0.1</span>),</span>
+<span id="cb8-103"><a href="#cb8-103" aria-hidden="true" tabindex="-1"></a>                                            <span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">100</span>, <span class="dv">200</span>, <span class="dv">300</span>, <span class="dv">400</span>)) <span class="sc">+</span></span>
+<span id="cb8-104"><a href="#cb8-104" aria-hidden="true" tabindex="-1"></a>                               <span class="fu">tm_compass</span>(<span class="at">position =</span> <span class="fu">c</span>(<span class="fl">0.05</span>, <span class="fl">0.8</span>),</span>
+<span id="cb8-105"><a href="#cb8-105" aria-hidden="true" tabindex="-1"></a>                                          <span class="at">size =</span> <span class="fl">1.3</span>)</span>
+<span id="cb8-106"><a href="#cb8-106" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 </section>
-<section id="select-suitable-environmental-conditions-for-dungeness-crab" class="level4">
-<h4 class="anchored" data-anchor-id="select-suitable-environmental-conditions-for-dungeness-crab">2. Select suitable environmental conditions for Dungeness Crab</h4>
+<section id="select-suitable-locations-for-dungeness-crab-and-calculate-total-suitable-area-in-each-eez" class="level4">
+<h4 class="anchored" data-anchor-id="select-suitable-locations-for-dungeness-crab-and-calculate-total-suitable-area-in-each-eez">2. Select suitable locations for Dungeness Crab and calculate total suitable area in each EEZ</h4>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Set workflow for selecting suitable environment conditions for crab</span></span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>crabs <span class="ot">&lt;-</span> <span class="cf">function</span>(Species, SST, Depth, EEZ, SST_extent){</span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Drop the units (m) of Bathymetry data</span></span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  Depth <span class="ot">&lt;-</span> <span class="fu">drop_units</span>(Depth)</span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Set suitable condition to 1 and unsuitable condition to 0</span></span>
-<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>  <span class="co"># This process will generates a "matrix"/"array" objective</span></span>
-<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>  SST_suit <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(SST[[<span class="dv">1</span>]] <span class="sc">&gt;=</span> <span class="dv">3</span> <span class="sc">&amp;</span> SST[[<span class="dv">1</span>]] <span class="sc">&lt;=</span> <span class="dv">19</span>, <span class="dv">1</span>, <span class="dv">0</span>)</span>
-<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>  Depth_suit <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(Depth[[<span class="dv">1</span>]] <span class="sc">&gt;=</span> <span class="sc">-</span><span class="dv">360</span> <span class="sc">&amp;</span> Depth[[<span class="dv">1</span>]] <span class="sc">&lt;=</span> <span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">0</span>) </span>
-<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Transform the "matrix"/"array" objective to "stars" format</span></span>
-<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>  SST_stars <span class="ot">&lt;-</span> <span class="fu">st_as_stars</span>(SST_suit, <span class="at">dimensions =</span> <span class="fu">st_dimensions</span>(SST))</span>
-<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>  Depth_stars <span class="ot">&lt;-</span> <span class="fu">st_as_stars</span>(Depth_suit, </span>
-<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>                             <span class="at">dimensions =</span> <span class="fu">st_dimensions</span>(Depth))</span>
-<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Try to stack</span></span>
-<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>  stack_raster <span class="ot">&lt;-</span> <span class="fu">tryCatch</span>({</span>
-<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>    <span class="fu">c</span>(SST_stars, Depth_stars)  <span class="co"># Try stacking the rasters</span></span>
-<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>  }, <span class="at">error =</span> <span class="cf">function</span>(e) {</span>
-<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>    <span class="cn">NULL</span>  <span class="co"># If stacking fails, return NULL</span></span>
-<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>  })</span>
-<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Check if successfully stack </span></span>
-<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(stack_raster)) {</span>
-<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>    <span class="fu">print</span>(<span class="st">"all match!"</span>)</span>
-<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
-<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a>    <span class="fu">print</span>(<span class="st">"not match"</span>)</span>
-<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Find suitable locations</span></span>
-<span id="cb9-31"><a href="#cb9-31" aria-hidden="true" tabindex="-1"></a>  crab_suit <span class="ot">&lt;-</span> SST_stars <span class="sc">*</span> Depth_stars</span>
-<span id="cb9-32"><a href="#cb9-32" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb9-33"><a href="#cb9-33" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Set unsuitable area as NA</span></span>
-<span id="cb9-34"><a href="#cb9-34" aria-hidden="true" tabindex="-1"></a>  crab_suit[crab_suit <span class="sc">==</span> <span class="dv">0</span>] <span class="ot">&lt;-</span> <span class="cn">NA</span></span>
-<span id="cb9-35"><a href="#cb9-35" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>crabs <span class="ot">&lt;-</span> <span class="cf">function</span>(Species, SST, Depth, maxT, minT, </span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>                    maxDepth, minDepth, EEZ, SST_extent){</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Set suitable condition to 1 and unsuitable condition to 0</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>  <span class="co"># This process will generates a "matrix"/"array" objective</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>  SST_suit <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(SST[[<span class="dv">1</span>]] <span class="sc">&gt;=</span> minT <span class="sc">&amp;</span> SST[[<span class="dv">1</span>]] <span class="sc">&lt;=</span> maxT, <span class="dv">1</span>, <span class="dv">0</span>)</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>  Depth_suit <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(Depth[[<span class="dv">1</span>]] <span class="sc">&gt;=</span> minDepth <span class="sc">&amp;</span> Depth[[<span class="dv">1</span>]] <span class="sc">&lt;=</span> maxDepth, <span class="dv">1</span>, <span class="dv">0</span>) </span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Transform the "matrix"/"array" objective to "stars" format</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>  SST_stars <span class="ot">&lt;-</span> <span class="fu">st_as_stars</span>(SST_suit, <span class="at">dimensions =</span> <span class="fu">st_dimensions</span>(SST))</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>  Depth_stars <span class="ot">&lt;-</span> <span class="fu">st_as_stars</span>(Depth_suit, </span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>                             <span class="at">dimensions =</span> <span class="fu">st_dimensions</span>(Depth))</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Find suitable locations</span></span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>  crab_suit <span class="ot">&lt;-</span> SST_stars <span class="sc">*</span> Depth_stars</span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Set unsuitable area as NA</span></span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>  crab_suit[crab_suit <span class="sc">==</span> <span class="dv">0</span>] <span class="ot">&lt;-</span> <span class="cn">NA</span></span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Transform data format from stars/sf to terra</span></span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Keep same projection (EPSG:5070, Projection method: Albers Equal Area, unit:m)</span></span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>  crab_suit_terra <span class="ot">&lt;-</span> terra<span class="sc">::</span><span class="fu">rast</span>(crab_suit) <span class="sc">%&gt;%</span></span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>                     terra<span class="sc">::</span><span class="fu">project</span>(<span class="st">"EPSG:5070"</span>)</span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>  wc_region_terra <span class="ot">&lt;-</span> terra<span class="sc">::</span><span class="fu">vect</span>(EEZ) <span class="sc">%&gt;%</span></span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a>                     terra<span class="sc">::</span><span class="fu">project</span>(<span class="st">"EPSG:5070"</span>)</span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Find suitable locations within the extent of Exclusive Economic Zones</span></span>
+<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a>  crab_suit_EEZ <span class="ot">&lt;-</span> terra<span class="sc">::</span><span class="fu">mask</span>(crab_suit_terra, wc_region_terra)</span>
+<span id="cb9-31"><a href="#cb9-31" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb9-32"><a href="#cb9-32" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Rasterize Exclusive Economic Zones data</span></span>
+<span id="cb9-33"><a href="#cb9-33" aria-hidden="true" tabindex="-1"></a>  EEZ_rasterized <span class="ot">&lt;-</span> terra<span class="sc">::</span><span class="fu">rasterize</span>(wc_region_terra,</span>
+<span id="cb9-34"><a href="#cb9-34" aria-hidden="true" tabindex="-1"></a>                                     crab_suit_terra,</span>
+<span id="cb9-35"><a href="#cb9-35" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">field =</span> <span class="st">"rgn_id"</span>)</span>
 <span id="cb9-36"><a href="#cb9-36" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb9-37"><a href="#cb9-37" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Transform data format from stars/sf to terra</span></span>
-<span id="cb9-38"><a href="#cb9-38" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Keep same projection (EPSG:5070, Projection method: Albers Equal Area, unit:m)</span></span>
-<span id="cb9-39"><a href="#cb9-39" aria-hidden="true" tabindex="-1"></a>  crab_suit_terra <span class="ot">&lt;-</span> terra<span class="sc">::</span><span class="fu">rast</span>(crab_suit) <span class="sc">%&gt;%</span></span>
-<span id="cb9-40"><a href="#cb9-40" aria-hidden="true" tabindex="-1"></a>                     terra<span class="sc">::</span><span class="fu">project</span>(<span class="st">"EPSG:5070"</span>)</span>
-<span id="cb9-41"><a href="#cb9-41" aria-hidden="true" tabindex="-1"></a>  wc_region_terra <span class="ot">&lt;-</span> terra<span class="sc">::</span><span class="fu">vect</span>(EEZ) <span class="sc">%&gt;%</span></span>
-<span id="cb9-42"><a href="#cb9-42" aria-hidden="true" tabindex="-1"></a>                     terra<span class="sc">::</span><span class="fu">project</span>(<span class="st">"EPSG:5070"</span>)</span>
-<span id="cb9-43"><a href="#cb9-43" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb9-44"><a href="#cb9-44" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb9-45"><a href="#cb9-45" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Find suitable locations within the extent of Exclusive Economic Zones</span></span>
-<span id="cb9-46"><a href="#cb9-46" aria-hidden="true" tabindex="-1"></a>  crab_suit_EEZ <span class="ot">&lt;-</span> terra<span class="sc">::</span><span class="fu">mask</span>(crab_suit_terra, wc_region_terra)</span>
-<span id="cb9-47"><a href="#cb9-47" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb9-48"><a href="#cb9-48" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Rasterize Exclusive Economic Zones data</span></span>
-<span id="cb9-49"><a href="#cb9-49" aria-hidden="true" tabindex="-1"></a>  EEZ_rasterized <span class="ot">&lt;-</span> terra<span class="sc">::</span><span class="fu">rasterize</span>(wc_region_terra,</span>
-<span id="cb9-50"><a href="#cb9-50" aria-hidden="true" tabindex="-1"></a>                                     crab_suit_terra,</span>
-<span id="cb9-51"><a href="#cb9-51" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">field =</span> <span class="st">"rgn_id"</span>) </span>
-<span id="cb9-52"><a href="#cb9-52" aria-hidden="true" tabindex="-1"></a>  EEZ_mask <span class="ot">&lt;-</span> <span class="fu">mask</span>(EEZ_rasterized, crab_suit_EEZ)</span>
-<span id="cb9-53"><a href="#cb9-53" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb9-54"><a href="#cb9-54" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Calculate suitable area for EEZs</span></span>
-<span id="cb9-55"><a href="#cb9-55" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Generate a raster with area information</span></span>
-<span id="cb9-56"><a href="#cb9-56" aria-hidden="true" tabindex="-1"></a>  cell_size <span class="ot">&lt;-</span> terra<span class="sc">::</span><span class="fu">cellSize</span>(crab_suit_EEZ)</span>
-<span id="cb9-57"><a href="#cb9-57" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Mask EEZ on the area raster</span></span>
-<span id="cb9-58"><a href="#cb9-58" aria-hidden="true" tabindex="-1"></a>  cell_area_masked <span class="ot">&lt;-</span> <span class="fu">mask</span>(cell_size, EEZ_mask)</span>
+<span id="cb9-37"><a href="#cb9-37" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Calculate suitable area for EEZs and join this to original EEZ (sf file)</span></span>
+<span id="cb9-38"><a href="#cb9-38" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Generate a raster with area information (for all cells)</span></span>
+<span id="cb9-39"><a href="#cb9-39" aria-hidden="true" tabindex="-1"></a>  cell_size <span class="ot">&lt;-</span> terra<span class="sc">::</span><span class="fu">cellSize</span>(crab_suit_EEZ)</span>
+<span id="cb9-40"><a href="#cb9-40" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Mask suitable locations on the area raster</span></span>
+<span id="cb9-41"><a href="#cb9-41" aria-hidden="true" tabindex="-1"></a>  cell_area_masked <span class="ot">&lt;-</span> <span class="fu">mask</span>(cell_size, crab_suit_EEZ)</span>
+<span id="cb9-42"><a href="#cb9-42" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Calculate suitable area for each EEZ</span></span>
+<span id="cb9-43"><a href="#cb9-43" aria-hidden="true" tabindex="-1"></a>  suitable_area <span class="ot">&lt;-</span> terra<span class="sc">::</span><span class="fu">zonal</span>(cell_area_masked, EEZ_rasterized, </span>
+<span id="cb9-44"><a href="#cb9-44" aria-hidden="true" tabindex="-1"></a>                                <span class="at">fun =</span> <span class="st">"sum"</span>, </span>
+<span id="cb9-45"><a href="#cb9-45" aria-hidden="true" tabindex="-1"></a>                                <span class="at">na.rm =</span> <span class="cn">TRUE</span>)  </span>
+<span id="cb9-46"><a href="#cb9-46" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb9-47"><a href="#cb9-47" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Transform the unit of the data and add the name of EEZ</span></span>
+<span id="cb9-48"><a href="#cb9-48" aria-hidden="true" tabindex="-1"></a>  suitable_area<span class="sc">$</span>suitable_area_km2 <span class="ot">&lt;-</span> suitable_area<span class="sc">$</span>area <span class="sc">/</span> <span class="fl">1e6</span></span>
+<span id="cb9-49"><a href="#cb9-49" aria-hidden="true" tabindex="-1"></a>  suitable_area<span class="sc">$</span>EEZ_name <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"Oregon"</span>, <span class="st">"Northern California"</span>,</span>
+<span id="cb9-50"><a href="#cb9-50" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"Central California"</span>, <span class="st">"Southern California"</span>,</span>
+<span id="cb9-51"><a href="#cb9-51" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"Washington"</span>)</span>
+<span id="cb9-52"><a href="#cb9-52" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Only keep useful information</span></span>
+<span id="cb9-53"><a href="#cb9-53" aria-hidden="true" tabindex="-1"></a>  suitable_area <span class="ot">&lt;-</span> suitable_area[, <span class="fu">c</span>(<span class="st">"EEZ_name"</span>, <span class="st">"suitable_area_km2"</span>)]</span>
+<span id="cb9-54"><a href="#cb9-54" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb9-55"><a href="#cb9-55" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Join total suitable area information to original EEZ (sf file)</span></span>
+<span id="cb9-56"><a href="#cb9-56" aria-hidden="true" tabindex="-1"></a>  EEZ_suitable_area <span class="ot">&lt;-</span> <span class="fu">left_join</span>(wc_region, suitable_area,</span>
+<span id="cb9-57"><a href="#cb9-57" aria-hidden="true" tabindex="-1"></a>                              <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"rgn"</span> <span class="ot">=</span> <span class="st">"EEZ_name"</span>))</span>
+<span id="cb9-58"><a href="#cb9-58" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb9-59"><a href="#cb9-59" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb9-60"><a href="#cb9-60" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Calculate suitable area for each EEZ</span></span>
-<span id="cb9-61"><a href="#cb9-61" aria-hidden="true" tabindex="-1"></a>  suitable_area <span class="ot">&lt;-</span> terra<span class="sc">::</span><span class="fu">zonal</span>(cell_area_masked, EEZ_rasterized, </span>
-<span id="cb9-62"><a href="#cb9-62" aria-hidden="true" tabindex="-1"></a>                                <span class="at">fun =</span> <span class="st">"sum"</span>, </span>
-<span id="cb9-63"><a href="#cb9-63" aria-hidden="true" tabindex="-1"></a>                                <span class="at">na.rm =</span> <span class="cn">TRUE</span>)  </span>
+<span id="cb9-60"><a href="#cb9-60" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb9-61"><a href="#cb9-61" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Map the suitable locations for crab and EEZ with total suitable area</span></span>
+<span id="cb9-62"><a href="#cb9-62" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Get unique area values for each EEZ and sort them</span></span>
+<span id="cb9-63"><a href="#cb9-63" aria-hidden="true" tabindex="-1"></a>  unique_values <span class="ot">&lt;-</span> <span class="fu">sort</span>(<span class="fu">unique</span>(EEZ_suitable_area<span class="sc">$</span>suitable_area_km2)) </span>
 <span id="cb9-64"><a href="#cb9-64" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb9-65"><a href="#cb9-65" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Transform the unit of the data and add the name of EEZ</span></span>
-<span id="cb9-66"><a href="#cb9-66" aria-hidden="true" tabindex="-1"></a>  suitable_area<span class="sc">$</span>area_km2 <span class="ot">&lt;-</span> suitable_area<span class="sc">$</span>area <span class="sc">/</span> <span class="fl">1e6</span></span>
-<span id="cb9-67"><a href="#cb9-67" aria-hidden="true" tabindex="-1"></a>  suitable_area<span class="sc">$</span>EEZ_name <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"Oregon"</span>, <span class="st">"Northern California"</span>,</span>
-<span id="cb9-68"><a href="#cb9-68" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"Central California"</span>, <span class="st">"Southern California"</span>,</span>
-<span id="cb9-69"><a href="#cb9-69" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"Washington"</span>)</span>
-<span id="cb9-70"><a href="#cb9-70" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Generate a summary table</span></span>
-<span id="cb9-71"><a href="#cb9-71" aria-hidden="true" tabindex="-1"></a>  suitable_area <span class="ot">&lt;-</span> suitable_area[, <span class="fu">c</span>(<span class="st">"EEZ_name"</span>, <span class="st">"area_km2"</span>)]</span>
-<span id="cb9-72"><a href="#cb9-72" aria-hidden="true" tabindex="-1"></a>  suitable_area_tab <span class="ot">&lt;-</span> <span class="fu">kable</span>(</span>
-<span id="cb9-73"><a href="#cb9-73" aria-hidden="true" tabindex="-1"></a>    suitable_area, </span>
-<span id="cb9-74"><a href="#cb9-74" aria-hidden="true" tabindex="-1"></a>    <span class="at">caption =</span> <span class="st">"Table 2 Suitable Area for Dungeness Crab in Each Exclusive Economic Zones (km²)"</span>,</span>
-<span id="cb9-75"><a href="#cb9-75" aria-hidden="true" tabindex="-1"></a>    <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">"Name"</span>, <span class="st">"Area (km²)"</span>)) </span>
-<span id="cb9-76"><a href="#cb9-76" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb9-77"><a href="#cb9-77" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb9-78"><a href="#cb9-78" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb9-79"><a href="#cb9-79" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Map the suitable locations for crab</span></span>
-<span id="cb9-80"><a href="#cb9-80" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Download base map from OSM of the bounding box</span></span>
-<span id="cb9-81"><a href="#cb9-81" aria-hidden="true" tabindex="-1"></a>  background_data <span class="ot">&lt;-</span> tmaptools<span class="sc">::</span><span class="fu">read_osm</span>(sf<span class="sc">::</span><span class="fu">st_bbox</span>(SST_extent))</span>
-<span id="cb9-82"><a href="#cb9-82" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb9-83"><a href="#cb9-83" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Keep raster data the same CRS to OSM</span></span>
-<span id="cb9-84"><a href="#cb9-84" aria-hidden="true" tabindex="-1"></a>  crab_suit_sameCRS <span class="ot">&lt;-</span> <span class="fu">st_transform</span>(crab_suit,</span>
-<span id="cb9-85"><a href="#cb9-85" aria-hidden="true" tabindex="-1"></a>                                    <span class="at">crs =</span> <span class="fu">st_crs</span>(background_data))</span>
-<span id="cb9-86"><a href="#cb9-86" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb9-87"><a href="#cb9-87" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Map</span></span>
-<span id="cb9-88"><a href="#cb9-88" aria-hidden="true" tabindex="-1"></a>  crab_map <span class="ot">&lt;-</span> <span class="fu">tm_shape</span>(background_data) <span class="sc">+</span> </span>
-<span id="cb9-89"><a href="#cb9-89" aria-hidden="true" tabindex="-1"></a>                  <span class="fu">tm_rgb</span>() <span class="sc">+</span></span>
-<span id="cb9-90"><a href="#cb9-90" aria-hidden="true" tabindex="-1"></a>                  <span class="fu">tm_shape</span>(crab_suit_sameCRS) <span class="sc">+</span></span>
-<span id="cb9-91"><a href="#cb9-91" aria-hidden="true" tabindex="-1"></a>                  <span class="fu">tm_raster</span>(<span class="at">palette =</span> <span class="st">"purple"</span>,</span>
-<span id="cb9-92"><a href="#cb9-92" aria-hidden="true" tabindex="-1"></a>                            <span class="at">title =</span> <span class="st">""</span>,</span>
-<span id="cb9-93"><a href="#cb9-93" aria-hidden="true" tabindex="-1"></a>                            <span class="at">labels =</span> <span class="fu">paste</span>(<span class="st">"Suitable locations</span><span class="sc">\n</span><span class="st">for"</span>, Species)) <span class="sc">+</span></span>
-<span id="cb9-94"><a href="#cb9-94" aria-hidden="true" tabindex="-1"></a>                  <span class="fu">tm_credits</span>(<span class="st">"© OpenStreetMap contributors"</span>,</span>
-<span id="cb9-95"><a href="#cb9-95" aria-hidden="true" tabindex="-1"></a>                             <span class="at">position=</span><span class="fu">c</span>(<span class="st">"left"</span>, <span class="st">"bottom"</span>)) <span class="sc">+</span></span>
-<span id="cb9-96"><a href="#cb9-96" aria-hidden="true" tabindex="-1"></a>                  <span class="fu">tm_layout</span>(<span class="at">legend.text.size =</span> <span class="fl">0.9</span>,</span>
-<span id="cb9-97"><a href="#cb9-97" aria-hidden="true" tabindex="-1"></a>                            <span class="at">legend.text.fontface =</span> <span class="st">"bold"</span>,</span>
-<span id="cb9-98"><a href="#cb9-98" aria-hidden="true" tabindex="-1"></a>                            <span class="at">legend.position =</span> <span class="fu">c</span>(<span class="fl">0.05</span>, <span class="fl">0.2</span>)) <span class="sc">+</span></span>
-<span id="cb9-99"><a href="#cb9-99" aria-hidden="true" tabindex="-1"></a>                <span class="fu">tm_scale_bar</span>(<span class="at">position =</span> <span class="fu">c</span>(<span class="fl">0.05</span>, <span class="fl">0.1</span>),</span>
-<span id="cb9-100"><a href="#cb9-100" aria-hidden="true" tabindex="-1"></a>                             <span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">100</span>, <span class="dv">200</span>, <span class="dv">300</span>)) <span class="sc">+</span></span>
-<span id="cb9-101"><a href="#cb9-101" aria-hidden="true" tabindex="-1"></a>                <span class="fu">tm_compass</span>(<span class="at">position =</span> <span class="fu">c</span>(<span class="fl">0.05</span>, <span class="fl">0.8</span>),</span>
-<span id="cb9-102"><a href="#cb9-102" aria-hidden="true" tabindex="-1"></a>                           <span class="at">size =</span> <span class="fl">1.3</span>)</span>
-<span id="cb9-103"><a href="#cb9-103" aria-hidden="true" tabindex="-1"></a>  map_table <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">crabMap =</span> crab_map, <span class="at">crabArea_Table =</span> suitable_area_tab)</span>
-<span id="cb9-104"><a href="#cb9-104" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(map_table)</span>
-<span id="cb9-105"><a href="#cb9-105" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb9-65"><a href="#cb9-65" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Generate breaks</span></span>
+<span id="cb9-66"><a href="#cb9-66" aria-hidden="true" tabindex="-1"></a>  breaks <span class="ot">&lt;-</span> <span class="fu">c</span>(unique_values, <span class="fu">max</span>(unique_values) <span class="sc">+</span> <span class="dv">1</span>)</span>
+<span id="cb9-67"><a href="#cb9-67" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb9-68"><a href="#cb9-68" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Generate palette</span></span>
+<span id="cb9-69"><a href="#cb9-69" aria-hidden="true" tabindex="-1"></a>  palette <span class="ot">&lt;-</span> viridisLite<span class="sc">::</span><span class="fu">viridis</span>(<span class="fu">length</span>(unique_values))</span>
+<span id="cb9-70"><a href="#cb9-70" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb9-71"><a href="#cb9-71" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Download base map from OSM of the bounding box</span></span>
+<span id="cb9-72"><a href="#cb9-72" aria-hidden="true" tabindex="-1"></a>  background_data <span class="ot">&lt;-</span> tmaptools<span class="sc">::</span><span class="fu">read_osm</span>(sf<span class="sc">::</span><span class="fu">st_bbox</span>(SST_extent))</span>
+<span id="cb9-73"><a href="#cb9-73" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb9-74"><a href="#cb9-74" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Keep data the same CRS to OSM</span></span>
+<span id="cb9-75"><a href="#cb9-75" aria-hidden="true" tabindex="-1"></a>  crab_suit_sameCRS <span class="ot">&lt;-</span> <span class="fu">st_transform</span>(crab_suit,</span>
+<span id="cb9-76"><a href="#cb9-76" aria-hidden="true" tabindex="-1"></a>                                    <span class="at">crs =</span> <span class="fu">st_crs</span>(background_data))</span>
+<span id="cb9-77"><a href="#cb9-77" aria-hidden="true" tabindex="-1"></a>  EEZ_suitable_area_sameCRS <span class="ot">&lt;-</span> <span class="fu">st_transform</span>(EEZ_suitable_area,</span>
+<span id="cb9-78"><a href="#cb9-78" aria-hidden="true" tabindex="-1"></a>                                    <span class="at">crs =</span> <span class="fu">st_crs</span>(background_data))</span>
+<span id="cb9-79"><a href="#cb9-79" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb9-80"><a href="#cb9-80" aria-hidden="true" tabindex="-1"></a>  crab_EEZ_suitable_map <span class="ot">&lt;-</span> <span class="fu">tm_shape</span>(background_data) <span class="sc">+</span> </span>
+<span id="cb9-81"><a href="#cb9-81" aria-hidden="true" tabindex="-1"></a>                             <span class="fu">tm_rgb</span>() <span class="sc">+</span></span>
+<span id="cb9-82"><a href="#cb9-82" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb9-83"><a href="#cb9-83" aria-hidden="true" tabindex="-1"></a>                           <span class="fu">tm_shape</span>(EEZ_suitable_area_sameCRS) <span class="sc">+</span></span>
+<span id="cb9-84"><a href="#cb9-84" aria-hidden="true" tabindex="-1"></a>                             <span class="fu">tm_polygons</span>(</span>
+<span id="cb9-85"><a href="#cb9-85" aria-hidden="true" tabindex="-1"></a>                               <span class="at">col =</span> <span class="st">"suitable_area_km2"</span>,</span>
+<span id="cb9-86"><a href="#cb9-86" aria-hidden="true" tabindex="-1"></a>                               <span class="at">breaks =</span> breaks,</span>
+<span id="cb9-87"><a href="#cb9-87" aria-hidden="true" tabindex="-1"></a>                               <span class="at">labels =</span> <span class="fu">as.character</span>(<span class="fu">ceiling</span>(unique_values)),</span>
+<span id="cb9-88"><a href="#cb9-88" aria-hidden="true" tabindex="-1"></a>                               <span class="at">palette =</span> palette,</span>
+<span id="cb9-89"><a href="#cb9-89" aria-hidden="true" tabindex="-1"></a>                               <span class="at">alpha =</span> <span class="fl">0.65</span>,</span>
+<span id="cb9-90"><a href="#cb9-90" aria-hidden="true" tabindex="-1"></a>                               <span class="at">title =</span> <span class="st">"Total suitable area(km²)"</span>) <span class="sc">+</span></span>
+<span id="cb9-91"><a href="#cb9-91" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb9-92"><a href="#cb9-92" aria-hidden="true" tabindex="-1"></a>                           <span class="fu">tm_shape</span>(crab_suit_sameCRS) <span class="sc">+</span></span>
+<span id="cb9-93"><a href="#cb9-93" aria-hidden="true" tabindex="-1"></a>                             <span class="fu">tm_raster</span>(<span class="at">palette =</span> <span class="st">"purple"</span>,</span>
+<span id="cb9-94"><a href="#cb9-94" aria-hidden="true" tabindex="-1"></a>                                <span class="at">title =</span> <span class="st">""</span>,</span>
+<span id="cb9-95"><a href="#cb9-95" aria-hidden="true" tabindex="-1"></a>                                <span class="at">labels =</span> <span class="fu">paste</span>(Species, <span class="st">"</span><span class="sc">\n</span><span class="st">suitable locations"</span>)) <span class="sc">+</span></span>
+<span id="cb9-96"><a href="#cb9-96" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb9-97"><a href="#cb9-97" aria-hidden="true" tabindex="-1"></a>                           <span class="fu">tm_shape</span>(EEZ_suitable_area) <span class="sc">+</span></span>
+<span id="cb9-98"><a href="#cb9-98" aria-hidden="true" tabindex="-1"></a>                             <span class="fu">tm_text</span>(<span class="st">"rgn"</span>, <span class="at">size =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb9-99"><a href="#cb9-99" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb9-100"><a href="#cb9-100" aria-hidden="true" tabindex="-1"></a>                           <span class="fu">tm_credits</span>(<span class="st">"© OpenStreetMap contributors"</span>,</span>
+<span id="cb9-101"><a href="#cb9-101" aria-hidden="true" tabindex="-1"></a>                                      <span class="at">position=</span><span class="fu">c</span>(<span class="st">"left"</span>, <span class="st">"bottom"</span>)) <span class="sc">+</span></span>
+<span id="cb9-102"><a href="#cb9-102" aria-hidden="true" tabindex="-1"></a>                           <span class="fu">tm_layout</span>(<span class="at">legend.text.size =</span> <span class="fl">0.6</span>,</span>
+<span id="cb9-103"><a href="#cb9-103" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">legend.title.size =</span> <span class="dv">1</span>,</span>
+<span id="cb9-104"><a href="#cb9-104" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">legend.title.fontface =</span> <span class="st">"bold"</span>,</span>
+<span id="cb9-105"><a href="#cb9-105" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">legend.outside =</span> <span class="cn">TRUE</span>) <span class="sc">+</span></span>
+<span id="cb9-106"><a href="#cb9-106" aria-hidden="true" tabindex="-1"></a>                           <span class="fu">tm_scale_bar</span>(<span class="at">position =</span> <span class="fu">c</span>(<span class="fl">0.05</span>, <span class="fl">0.1</span>),</span>
+<span id="cb9-107"><a href="#cb9-107" aria-hidden="true" tabindex="-1"></a>                                        <span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">100</span>, <span class="dv">200</span>, <span class="dv">300</span>, <span class="dv">400</span>)) <span class="sc">+</span></span>
+<span id="cb9-108"><a href="#cb9-108" aria-hidden="true" tabindex="-1"></a>                           <span class="fu">tm_compass</span>(<span class="at">position =</span> <span class="fu">c</span>(<span class="fl">0.05</span>, <span class="fl">0.8</span>),</span>
+<span id="cb9-109"><a href="#cb9-109" aria-hidden="true" tabindex="-1"></a>                                      <span class="at">size =</span> <span class="fl">1.3</span>)</span>
+<span id="cb9-110"><a href="#cb9-110" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 </section>
 </section>
-<section id="generate-suitable-area-for-oysters-and-dungeness-crab" class="level3">
-<h3 class="anchored" data-anchor-id="generate-suitable-area-for-oysters-and-dungeness-crab">Generate suitable area for oysters and Dungeness Crab</h3>
+<section id="generate-suitable-locations-and-areas-for-oysters-and-dungeness-crab" class="level3">
+<h3 class="anchored" data-anchor-id="generate-suitable-locations-and-areas-for-oysters-and-dungeness-crab">Generate suitable locations and areas for oysters and Dungeness Crab</h3>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>oysters <span class="ot">&lt;-</span> <span class="fu">oysters</span>(<span class="st">"oysters"</span>, <span class="at">SST =</span> SST_aveC, <span class="at">Depth =</span> Bathymetry_resampled, <span class="at">EEZ =</span> wc_region, <span class="at">SST_extent =</span> SST_extent)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] "all match!"</code></pre>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>oysters <span class="ot">&lt;-</span> <span class="fu">oysters</span>(<span class="at">Species =</span> <span class="st">"oysters"</span>, </span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>                   <span class="at">SST =</span> SST_aveC, <span class="at">Depth =</span> Bathymetry_resampled, </span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>                   <span class="at">maxT =</span> <span class="dv">30</span>, <span class="at">minT =</span> <span class="dv">11</span>, </span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>                   <span class="at">maxDepth =</span> <span class="dv">0</span>, <span class="at">minDepth =</span> <span class="sc">-</span><span class="dv">70</span>,</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>                   <span class="at">EEZ =</span> wc_region, <span class="at">SST_extent =</span> SST_extent)</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>crabs <span class="ot">&lt;-</span> <span class="fu">crabs</span>(<span class="at">Species =</span> <span class="st">"Dungeness Crab"</span>, </span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>               <span class="at">SST =</span> SST_aveC, <span class="at">Depth =</span> Bathymetry_resampled, </span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>               <span class="at">maxT =</span> <span class="dv">19</span>, <span class="at">minT =</span> <span class="dv">3</span>, </span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>               <span class="at">maxDepth =</span> <span class="dv">0</span>, <span class="at">minDepth =</span> <span class="sc">-</span><span class="dv">360</span>,</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>               <span class="at">EEZ =</span> wc_region, <span class="at">SST_extent =</span> SST_extent)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>crabs <span class="ot">&lt;-</span> <span class="fu">crabs</span>(<span class="st">"Dungeness Crab"</span>, <span class="at">SST =</span> SST_aveC, <span class="at">Depth =</span> Bathymetry_resampled, <span class="at">EEZ =</span> wc_region, <span class="at">SST_extent =</span> SST_extent)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] "all match!"</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tmap_arrange</span>(oysters<span class="sc">$</span>oysterMap, crabs<span class="sc">$</span>crabMap, <span class="at">ncol =</span> <span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tmap_arrange</span>(oysters, crabs, <span class="at">ncol =</span> <span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="HW4_files/figure-html/unnamed-chunk-8-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="HW4_files/figure-html/unnamed-chunk-9-1.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
 </div>
-<p>Figure 1 Suitable locations for oysters (left) and Dungeness Crab</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>oysters<span class="sc">$</span>oysterArea_Table</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output-display">
-<table class="caption-top table table-sm table-striped small">
-<caption>Table 1 Suitable Area of Oyster in Each Exclusive Economic Zones (km²)</caption>
-<thead>
-<tr class="header">
-<th style="text-align: left;">Name</th>
-<th style="text-align: right;">Area (km²)</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: left;">Oregon</td>
-<td style="text-align: right;">510.7760</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">Northern California</td>
-<td style="text-align: right;">299.4187</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">Central California</td>
-<td style="text-align: right;">3504.9712</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">Southern California</td>
-<td style="text-align: right;">3804.4037</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">Washington</td>
-<td style="text-align: right;">1092.0082</td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>crabs<span class="sc">$</span>crabArea_Table</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output-display">
-<table class="caption-top table table-sm table-striped small">
-<caption>Table 2 Suitable Area for Dungeness Crab in Each Exclusive Economic Zones (km²)</caption>
-<thead>
-<tr class="header">
-<th style="text-align: left;">Name</th>
-<th style="text-align: right;">Area (km²)</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: left;">Oregon</td>
-<td style="text-align: right;">19691.226</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">Northern California</td>
-<td style="text-align: right;">9581.467</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">Central California</td>
-<td style="text-align: right;">11008.068</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">Southern California</td>
-<td style="text-align: right;">13544.369</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">Washington</td>
-<td style="text-align: right;">18123.760</td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-<p>According to Figure 1, we can see that both oysters and Dungeness Crab have wide distribution across the west coast of the US. Particularly, oysters are more concentrated in the southern part, but Dungeness Crab prefers the northern part. The statistic of suitable areas within each Exclusive Economic Zone shows similar patterns, where Oregon and Washington are more suitable for Dungeness Crab aquaculture, while Central and Southern California are more suitable for oysters aquaculture (Table 1 and Table 2).</p>
+<p>Figure1 Suitable locations and total suitable area in each EEZ for oysters (left) and Dungeness Crab (right)</p>
+<p>According to Figure 1, we can see that both oysters and Dungeness Crab have wide suitable habitats across the West Coast of the US, although there are much more suitable locations for Dungeness Crab than oysters. Oysters are particularly concentrated in the southern part, but Dungeness Crabs prefer the northern part. The statistic of total suitable areas within each Exclusive Economic Zone shows similar patterns, where Oregon and Washington are more suitable for Dungeness Crab aquaculture, while Central and Southern California are more suitable for oyster aquaculture.</p>
 </section>
-<section id="citation" class="level3">
-<h3 class="anchored" data-anchor-id="citation">Citation</h3>
+<section id="citations" class="level3">
+<h3 class="anchored" data-anchor-id="citations">Citations</h3>
 <table class="caption-top table">
 <thead>
 <tr class="header">
